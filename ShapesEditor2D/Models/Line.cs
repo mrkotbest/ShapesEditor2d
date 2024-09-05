@@ -2,8 +2,6 @@
 {
 	public class Line : Shape
 	{
-		private const float _tolerance = 3.0f;	// Допустимая погрешность для "попадания" точки на линию
-
 		public Vertex Start { get; private set; }
 		public Vertex End { get; private set; }
 
@@ -16,6 +14,7 @@
 		public override void SetSelected(bool isSelected)
 		{
 			base.SetSelected(isSelected);
+
 			Start.SetSelected(isSelected);
 			End.SetSelected(isSelected);
 		}
@@ -36,17 +35,10 @@
 				}
 			}
 			else
-			{
 				g.DrawLine(Pens.Black, Start.X, Start.Y, End.X, End.Y);
-			}
 
 			Start.Draw(g);
 			End.Draw(g);
-		}
-
-		public override bool ContainsPoint(Vertex v)
-		{
-			return IsPointOnLine(Start, End, v);
 		}
 
 		public override void Transform(int x, int y)
@@ -55,15 +47,16 @@
 			End = new Vertex(End.X + x, End.Y + y);
 		}
 
-		private bool IsPointOnLine(Vertex startLine, Vertex endLine, Vertex v)
+		public override bool ContainsPoint(Vertex v)
 		{
-			float distance = Math.Abs((endLine.Y - startLine.Y) * v.X - (endLine.X - startLine.X) *
-				v.Y + endLine.X * startLine.Y - endLine.Y * startLine.X) /
-				(float)Math.Sqrt(Math.Pow(endLine.Y - startLine.Y, 2) + Math.Pow(endLine.X - startLine.X, 2));
-			return distance <= _tolerance;
+			var totalLength = Start.DistanceTo(End);
+			var lengthToStart = Start.DistanceTo(v);
+			var lengthToEnd = End.DistanceTo(v);
+
+			return Math.Abs(totalLength - (lengthToStart + lengthToEnd)) < Epsilon;
 		}
 
 		public override string ToString()
-			=> $"{Start} -> {End}";
+			=> $"Line [{Start} -> {End}]";
 	}
 }

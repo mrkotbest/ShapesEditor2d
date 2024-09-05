@@ -38,9 +38,17 @@
 			ssCoordinates = new ToolStripStatusLabel();
 			ssInfo = new ToolStripStatusLabel();
 			ssInfoActivated = new ToolStripStatusLabel();
+			toolStrip1 = new ToolStrip();
+			rtsPoint = new ToolStripDropDownButton();
+			rtsPointClosestPoint = new ToolStripMenuItem();
+			rtsPointBelongsTo = new ToolStripMenuItem();
+			rtsPointCircle = new ToolStripMenuItem();
+			rtsPointRect = new ToolStripMenuItem();
+			rtsPointTriangle = new ToolStripMenuItem();
 			ts.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)drawingBox).BeginInit();
 			ss.SuspendLayout();
+			toolStrip1.SuspendLayout();
 			SuspendLayout();
 			// 
 			// ts
@@ -121,15 +129,72 @@
 			ssInfoActivated.Size = new Size(22, 17);
 			ssInfoActivated.Text = "???";
 			// 
+			// toolStrip1
+			// 
+			toolStrip1.Dock = DockStyle.Right;
+			toolStrip1.Items.AddRange(new ToolStripItem[] { rtsPoint });
+			toolStrip1.Location = new Point(1135, 25);
+			toolStrip1.Name = "toolStrip1";
+			toolStrip1.Size = new Size(49, 614);
+			toolStrip1.TabIndex = 4;
+			toolStrip1.Text = "toolStrip1";
+			// 
+			// rtsPoint
+			// 
+			rtsPoint.DisplayStyle = ToolStripItemDisplayStyle.Text;
+			rtsPoint.DropDownItems.AddRange(new ToolStripItem[] { rtsPointClosestPoint, rtsPointBelongsTo, rtsPointCircle, rtsPointRect, rtsPointTriangle });
+			rtsPoint.Image = (Image)resources.GetObject("rtsPoint.Image");
+			rtsPoint.ImageTransparentColor = Color.Magenta;
+			rtsPoint.Name = "rtsPoint";
+			rtsPoint.Size = new Size(46, 19);
+			rtsPoint.Text = "Point";
+			// 
+			// rtsPointClosestPoint
+			// 
+			rtsPointClosestPoint.Name = "rtsPointClosestPoint";
+			rtsPointClosestPoint.Size = new Size(180, 22);
+			rtsPointClosestPoint.Text = "Closest Point";
+			rtsPointClosestPoint.Click += rtsPointClosestPoint_Click;
+			// 
+			// rtsPointBelongsTo
+			// 
+			rtsPointBelongsTo.Name = "rtsPointBelongsTo";
+			rtsPointBelongsTo.Size = new Size(180, 22);
+			rtsPointBelongsTo.Text = "Belongs To Object";
+			rtsPointBelongsTo.Click += rtsPointBelongsTo_Click;
+			// 
+			// rtsPointCircle
+			// 
+			rtsPointCircle.Name = "rtsPointCircle";
+			rtsPointCircle.Size = new Size(180, 22);
+			rtsPointCircle.Text = "Draw Circle";
+			rtsPointCircle.Click += rtsPointCircle_Click;
+			// 
+			// rtsPointRect
+			// 
+			rtsPointRect.Name = "rtsPointRect";
+			rtsPointRect.Size = new Size(180, 22);
+			rtsPointRect.Text = "Draw Rectangle";
+			rtsPointRect.Click += rtsPointRect_Click;
+			// 
+			// rtsPointTriangle
+			// 
+			rtsPointTriangle.Name = "rtsPointTriangle";
+			rtsPointTriangle.Size = new Size(180, 22);
+			rtsPointTriangle.Text = "Draw Triangle";
+			rtsPointTriangle.Click += rtsPointTriangle_Click;
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(1184, 661);
+			Controls.Add(toolStrip1);
 			Controls.Add(ss);
 			Controls.Add(drawingBox);
 			Controls.Add(ts);
 			Name = "MainForm";
+			StartPosition = FormStartPosition.CenterScreen;
 			Text = "Shapes Editor 2D";
 			Load += MainForm_Load;
 			KeyDown += MainForm_KeyDown;
@@ -138,6 +203,8 @@
 			((System.ComponentModel.ISupportInitialize)drawingBox).EndInit();
 			ss.ResumeLayout(false);
 			ss.PerformLayout();
+			toolStrip1.ResumeLayout(false);
+			toolStrip1.PerformLayout();
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -153,5 +220,12 @@
 		private ToolStripStatusLabel ssCoordinates;
 		private ToolStripStatusLabel ssInfo;
 		private ToolStripStatusLabel ssInfoActivated;
+		private ToolStrip toolStrip1;
+		private ToolStripDropDownButton rtsPoint;
+		private ToolStripMenuItem rtsPointClosestPoint;
+		private ToolStripMenuItem rtsPointBelongsTo;
+		private ToolStripMenuItem rtsPointCircle;
+		private ToolStripMenuItem rtsPointRect;
+		private ToolStripMenuItem rtsPointTriangle;
 	}
 }

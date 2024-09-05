@@ -6,11 +6,8 @@ namespace ShapesEditor2D.Factories
 	{
 		public static List<Shape> Shapes { get; private set; } = new List<Shape>();
 
-		public static Vertex CreateVertex(Vertex v)
-		{
-			Shapes.Add(v);
-			return v;
-		}
+		public static void CreateVertex(Vertex v)
+			=> Shapes.Add(v);
 
 		public static Line CreateLine(List<Vertex> vertices)
 		{
@@ -56,9 +53,7 @@ namespace ShapesEditor2D.Factories
 			foreach (var shape in Shapes)
 			{
 				foreach (var vertex in shape.GetVertices())
-				{
 					yield return vertex;
-				}
 			}
 		}
 
@@ -67,11 +62,18 @@ namespace ShapesEditor2D.Factories
 			for (int i = Shapes.Count - 1; i >= 0; i--)
 			{
 				if (Shapes[i] is T shape)
-				{
 					return shape;
-				}
 			}
 			return null;
 		}
+
+		public static Shape GetShapeAtLocation(Point location, double radius)
+		{
+			var point = new Vertex(location.X, location.Y);
+			return Shapes.FirstOrDefault(shape => shape.GetVertices().Any(vertex => vertex.DistanceTo(point) <= radius));
+		}
+
+		public static Vertex GetVertexAtPoint(Point point, double radius = 10)
+			=> GetAllVertices().FirstOrDefault(v => v.DistanceTo(new Vertex(point.X, point.Y)) <= radius);
 	}
 }

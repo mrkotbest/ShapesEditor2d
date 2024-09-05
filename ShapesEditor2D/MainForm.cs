@@ -11,9 +11,9 @@ namespace ShapesEditor2D
 		private Mode _mode = Mode.None;
 		private SelectionService _selectionService;
 		private SnappingService _snapService;
+		private List<Vertex> _currentVertices;
 		private bool _isSelecting = false;
 		private bool _snappingEnabled = false;
-		private List<Vertex> _currentVertices = new List<Vertex>();
 
 		private Rectangle _selectionRectangle;
 
@@ -29,23 +29,48 @@ namespace ShapesEditor2D
 			_g = drawingBox.CreateGraphics();
 			_selectionService = new SelectionService();
 			_snapService = new SnappingService();
+			_currentVertices = new List<Vertex>();
 		}
 
 		private void drawingBox_MouseClick(object sender, MouseEventArgs e)
 		{
 			switch (_mode)
 			{
-				case Mode.None:
-					break;
-				case Mode.Snap:
-					break;
 				case Mode.Draw:
 					HandleDrawingMode(e.Location);
 					break;
 				case Mode.Select:
 					HandleSelectionMode(e.Location);
 					break;
-				default:
+				case Mode.None:
+					if (_pointCircle is true || _pointRect is true || _pointTriangle is true)
+					{
+						var v = ShapeFactory.GetVertexAtPoint(new Point(e.X, e.Y), 20);
+						if (v != null)
+						{
+							if (_pointCircle)
+							{
+								var circle = v.CreateCircleAroundPoint(30);
+								ShapeFactory.Shapes.Add(circle);
+								ssInfo.Text = "Создан круг";
+							}
+							else if (_pointRect)
+							{
+								var rect = v.CreateSquareAroundPoint(30);
+								ShapeFactory.Shapes.Add(rect);
+								ssInfo.Text = "Создан квадрат";
+							}
+							else if (_pointTriangle)
+							{
+								var triangle = v.CreateTriangleAroundPoint(30);
+								ShapeFactory.Shapes.Add(triangle);
+								ssInfo.Text = "Создан треугольник";
+							}
+							drawingBox.Invalidate();
+						}
+						else
+							ssInfo.Text = string.Empty;
+					}
 					break;
 			}
 			drawingBox.Invalidate();
@@ -58,13 +83,10 @@ namespace ShapesEditor2D
 			switch (_currentVertices.Count)
 			{
 				case 1:
-					// Создание точки
 					ShapeFactory.CreateVertex(_currentVertices[0]);
 					ssInfo.Text = $"Создан объект: Точка {_currentVertices[0]}";
 					break;
-
 				case 2:
-					// Создание линии
 					var lastVertex = ShapeFactory.GetLastAddedShape<Vertex>();
 					if (lastVertex != null)
 						ShapeFactory.RemoveShape(lastVertex);
@@ -72,7 +94,6 @@ namespace ShapesEditor2D
 					ShapeFactory.CreateLine(_currentVertices);
 					ssInfo.Text = $"Создан объект: Линия {_currentVertices[0]} -> {_currentVertices[1]}";
 					break;
-
 				default:
 					if (_snapService.ShouldClosePolygon(_currentVertices))
 					{
@@ -111,16 +132,14 @@ namespace ShapesEditor2D
 
 		}
 
-		private void DrawSnappedVertex(Point location)
+		private void SnapVertex(Point location, bool magnit = false)
 		{
 			var snappedVertex = SnappingService.SnapToVertex(ShapeFactory.GetAllVertices(), location);
 			if (snappedVertex != null)
-			{
-				ApplyMagnetEffect(location, snappedVertex);
 				_g.DrawEllipse(Pens.Blue, snappedVertex.X - 5, snappedVertex.Y - 5, 10, 10);
-			}
-			else
-				drawingBox.Invalidate();
+			if (magnit && snappedVertex != null)
+				ApplyMagnetEffect(location, snappedVertex);
+			drawingBox.Invalidate();
 		}
 		private void ApplyMagnetEffect(Point location, Vertex snappedVertex)
 		{
@@ -151,7 +170,33 @@ namespace ShapesEditor2D
 
 			if (_snappingEnabled)
 			{
-				DrawSnappedVertex(e.Location);
+				SnapVertex(e.Location, true);
+			}
+
+			if (_isClosestPoint)
+			{
+				Vertex closestVertex = Vertex.GetClosestVertex(new Vertex(e.X, e.Y));
+				foreach (var shape in ShapeFactory.Shapes)
+				{
+					shape.SetSelected(shape.Equals(closestVertex));
+				}
+				drawingBox.Invalidate();
+			}
+
+			if (_isPointBelongsTo)
+			{
+				var shape = ShapeFactory.GetShapeAtLocation(e.Location, 10);
+				if (shape == null) return;
+
+				var mousePos = new Vertex(e.X, e.Y);
+				bool isWithinRadius = shape.GetVertices().Any(vertex => vertex.DistanceTo(mousePos) <= 10);
+
+				if (isWithinRadius)
+					ssInfo.Text = $"{mousePos} принадлежит объекту {shape}";
+				else
+					ssInfo.Text = string.Empty;
+
+				SnapVertex(e.Location);
 			}
 		}
 		private void drawingBox_MouseUp(object sender, MouseEventArgs e)
@@ -164,9 +209,8 @@ namespace ShapesEditor2D
 					var shapes = _selectionService.GetShapesInRectangle(_selectionRectangle).ToList();
 					_selectionRectangle = Rectangle.Empty;
 
-					if (shapes.Any())
+					if (shapes.Count != 0)
 					{
-						// Группируем объекты по типу и считаем количество каждого типа
 						var shapeGroups = shapes
 							.GroupBy(shape => shape.GetType())
 							.Select(group => new
@@ -175,21 +219,33 @@ namespace ShapesEditor2D
 								Count = group.Count()
 							});
 
-						// Формируем строку с количеством объектов каждого типа
-						var info = string.Join("\n", shapeGroups.Select(group =>
+						var info = string.Join(" \\ ", shapeGroups.Select(group =>
 							$"{group.Type.Name}: {group.Count}"));
-
-						// Отображаем информацию в ssInfo.Text
 						ssInfo.Text = $"Найдено объектов:\n{info}";
 					}
-					else
-					{
-						ssInfo.Text = "Нет объектов в выделенной области.";
-					}
-
 					drawingBox.Invalidate();
 				}
 			}
+		}
+
+		private void FinishAnyMode()
+		{
+			_mode = Mode.None;
+			_isClosestPoint = false;
+			_isPointBelongsTo = false;
+			_pointCircle = false;
+			_pointRect = false;
+			_pointTriangle = false;
+			_currentVertices.Clear();
+			ResetAllPointModes();
+			drawingBox.Invalidate();
+			ssInfo.Text = string.Empty;
+			ssInfoActivated.Text = "Все режими завершены";
+		}
+		private void MainForm_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.Escape)
+				FinishAnyMode();
 		}
 
 		private void drawingBox_Paint(object sender, PaintEventArgs e)
@@ -217,7 +273,8 @@ namespace ShapesEditor2D
 			}
 			else if (_mode == Mode.Draw)
 			{
-				FinishDrawingMode();
+				_mode = Mode.None;
+				ssInfoActivated.Text = "Режим рисования завершен";
 			}
 		}
 		private void tsSelection_Click(object sender, EventArgs e)
@@ -240,18 +297,25 @@ namespace ShapesEditor2D
 			ssInfoActivated.Text = _snappingEnabled ? "Привязка включена" : "Привязка выключена";
 		}
 
-		private void MainForm_KeyDown(object sender, KeyEventArgs e)
+
+		private void ResetAllPointModes()
+			=> _isClosestPoint = _isPointBelongsTo = _pointCircle = _pointRect = _pointTriangle = false;
+		private void ToggleMode(ref bool mode)
 		{
-			if (e.KeyCode == Keys.Escape)
-				FinishDrawingMode();
+			if (mode)
+				ResetAllPointModes();
+			else
+			{
+				ResetAllPointModes();
+				mode = true;
+			}
 		}
 
-		private void FinishDrawingMode()
-		{
-			_mode = Mode.None;
-			_currentVertices.Clear();
-			drawingBox.Invalidate();
-			ssInfoActivated.Text = "Режим рисования завершен.";
-		}
+		private bool _isClosestPoint, _isPointBelongsTo, _pointCircle, _pointRect, _pointTriangle;
+		private void rtsPointClosestPoint_Click(object sender, EventArgs e) => ToggleMode(ref _isClosestPoint);
+		private void rtsPointBelongsTo_Click(object sender, EventArgs e) => ToggleMode(ref _isPointBelongsTo);
+		private void rtsPointCircle_Click(object sender, EventArgs e) => ToggleMode(ref _pointCircle);
+		private void rtsPointRect_Click(object sender, EventArgs e) => ToggleMode(ref _pointRect);
+		private void rtsPointTriangle_Click(object sender, EventArgs e) => ToggleMode(ref _pointTriangle);
 	}
 }

@@ -10,7 +10,7 @@ namespace ShapesEditor2D.Services
 
 		public void SelectShape(Shape shape)
 		{
-			if (!SelectedShapes.Contains(shape))
+			if (!SelectedShapes.Contains(shape) && shape != null)
 			{
 				SelectedShapes.Add(shape);
 				shape.SetSelected(true);
@@ -19,8 +19,11 @@ namespace ShapesEditor2D.Services
 
 		public void DeselectShape(Shape shape)
 		{
-			SelectedShapes.Remove(shape);
-			shape.SetSelected(false);
+			if (shape != null)
+			{
+				SelectedShapes.Remove(shape);
+				shape.SetSelected(false);
+			}
 		}
 
 		public void ClearSelection()
@@ -33,26 +36,6 @@ namespace ShapesEditor2D.Services
 
 			SelectedShapes.Clear();
 			SelectedVertices.Clear();
-		}
-
-		public Vertex GetNearestVertex(Vertex vertex)
-		{
-			Vertex nearestVertex = null;
-			double nearestDistance = double.MaxValue;
-
-			foreach (var shape in SelectedShapes)
-			{
-				foreach (var v in shape.GetVertices())
-				{
-					var distance = vertex.DistanceTo(v);
-					if (distance < nearestDistance)
-					{
-						nearestVertex = v;
-						nearestDistance = distance;
-					}
-				}
-			}
-			return nearestVertex;
 		}
 
 		public IEnumerable<Shape> GetShapesInRectangle(Rectangle rectangle)

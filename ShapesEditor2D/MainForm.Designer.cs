@@ -59,6 +59,7 @@
 			tsDraw.Name = "tsDraw";
 			tsDraw.Size = new Size(54, 22);
 			tsDraw.Text = "Draw";
+			tsDraw.Click += tsDraw_Click;
 			// 
 			// tsSelection
 			// 
@@ -67,6 +68,7 @@
 			tsSelection.Name = "tsSelection";
 			tsSelection.Size = new Size(58, 22);
 			tsSelection.Text = "Select";
+			tsSelection.Click += tsSelection_Click;
 			// 
 			// tsSnap
 			// 
@@ -75,6 +77,7 @@
 			tsSnap.Name = "tsSnap";
 			tsSnap.Size = new Size(77, 22);
 			tsSnap.Text = "Snapping";
+			tsSnap.Click += tsSnap_Click;
 			// 
 			// drawingBox
 			// 
@@ -84,6 +87,11 @@
 			drawingBox.Size = new Size(1184, 636);
 			drawingBox.TabIndex = 2;
 			drawingBox.TabStop = false;
+			drawingBox.Paint += drawingBox_Paint;
+			drawingBox.MouseClick += drawingBox_MouseClick;
+			drawingBox.MouseDown += drawingBox_MouseDown;
+			drawingBox.MouseMove += drawingBox_MouseMove;
+			drawingBox.MouseUp += drawingBox_MouseUp;
 			// 
 			// ss
 			// 
@@ -103,7 +111,8 @@
 			// ssInfo
 			// 
 			ssInfo.Name = "ssInfo";
-			ssInfo.Size = new Size(31, 17);
+			ssInfo.Size = new Size(1105, 17);
+			ssInfo.Spring = true;
 			ssInfo.Text = "NaN";
 			// 
 			// ssInfoActivated
@@ -122,6 +131,8 @@
 			Controls.Add(ts);
 			Name = "MainForm";
 			Text = "Shapes Editor 2D";
+			Load += MainForm_Load;
+			KeyDown += MainForm_KeyDown;
 			ts.ResumeLayout(false);
 			ts.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)drawingBox).EndInit();

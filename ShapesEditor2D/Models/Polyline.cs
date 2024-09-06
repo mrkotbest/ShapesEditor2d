@@ -28,7 +28,7 @@ namespace ShapesEditor2D.Models
 		public override IEnumerable<Vertex> GetVertices()
 			=> Vertices;
 
-		public override void Draw(Graphics g)
+		public override void Draw(Graphics g, bool length = false)
 		{
 			Pen pen = IsSelected ? new Pen(Color.CadetBlue, 2) : Pens.Black;
 
@@ -40,10 +40,9 @@ namespace ShapesEditor2D.Models
 			Vertices[^1].Draw(g);
 		}
 
-		public override void Transform(int x, int y)
+		public override void Translate(double x, double y)
 		{
-			for (int i = 0; i < Vertices.Count; i++)
-				Vertices[i] = new Vertex(Vertices[i].X + x, Vertices[i].Y + y);
+
 		}
 
 		public override bool ContainsPoint(Vertex vertex)

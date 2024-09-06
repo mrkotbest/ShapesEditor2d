@@ -1,5 +1,4 @@
 ﻿using ShapesEditor2D.Factories;
-using System.Linq;
 
 namespace ShapesEditor2D.Models
 {
@@ -19,28 +18,32 @@ namespace ShapesEditor2D.Models
 
 		public override IEnumerable<Vertex> GetVertices() { yield return this; }
 
-		public override void Draw(Graphics g)
+		public override void Draw(Graphics g, bool length = false)
 		{
 			if (IsSelected)
-				g.FillRectangle(Brushes.Aqua, X - 3, Y - 3, 9, 9);
+				g.FillRectangle(Brushes.Aqua, X - 5, Y - 5, 10, 10);
 			else
 				g.FillEllipse(Brushes.Black, X - 3, Y - 3, 6, 6);
+
+			if (length)
+				g.FillEllipse(Brushes.Red, X - 5, Y - 5, 10, 10);
 		}
 
-		public override void Transform(int x, int y)
-		{
-			X += x;
-			Y += y;
-		}
+		public override void Translate(double x, double y) {  }
 
 		public override bool ContainsPoint(Vertex vertex)
 			=> Equals(vertex);
 
+		public double DistanceTo(Point other)
+			=> Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
+
 		public double DistanceTo(Vertex other)
 			=> Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
 
-		public static Vertex GetClosestVertex(Vertex vertex)
-			=> ShapeFactory.GetAllVertices().OrderBy(v => v.DistanceTo(vertex)).FirstOrDefault();
+		public static Vertex GetClosestVertex(Point point)
+			=> ShapeFactory.GetAllVertices()
+				.OrderBy(p => Math.Sqrt(Math.Pow(p.X - point.X, 2) + Math.Pow(p.Y - point.Y, 2)))
+				.FirstOrDefault();
 
 		public Polygon CreateCircleAroundPoint(double radius, int numSegments = 15)
 		{
@@ -78,8 +81,17 @@ namespace ShapesEditor2D.Models
 		public override string ToString()
 			=> $"V:({X}:{Y})";
 		public override bool Equals(object obj)
-			=> obj is Vertex other && X == other.X && Y == other.Y;
+		{
+			if (obj is Vertex otherVertex)
+			{
+				return X == otherVertex.X && Y == otherVertex.Y;
+			}
+			return false;
+		}
+
 		public override int GetHashCode()
-			=> HashCode.Combine(X, Y);
+		{
+			return X.GetHashCode() ^ Y.GetHashCode();
+		}
 	}
 }

@@ -10,7 +10,7 @@
 			}
 		}
 
-		public override void Draw(Graphics g)
+		public override void Draw(Graphics g, bool length = false)
 		{
 			base.Draw(g);
 

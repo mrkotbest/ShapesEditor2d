@@ -1,17 +1,19 @@
-﻿using ShapesEditor2D.Models;
+﻿using ShapesEditor2D.Factories;
+using ShapesEditor2D.Models;
 
 namespace ShapesEditor2D.Services
 {
 	public class SnappingService
 	{
-		private const float _snappingTolerance = 3.0f;
-		private float _magnetStrength = 1f;
+		private const float _snappingTolerance = 5.0f;
+		private float _magnetStrength = 0.3f;
 
-		public static Vertex SnapToVertex(IEnumerable<Vertex> vertices, PointF point)
+		public static Vertex SnapToVertex(PointF point)
 		{
-			return vertices.FirstOrDefault(vertex =>
-				Math.Abs(vertex.X - point.X) <= _snappingTolerance &&
-				Math.Abs(vertex.Y - point.Y) <= _snappingTolerance);
+			return ShapeFactory.GetAllVertices()
+				.Where(vertex => Math.Abs(vertex.X - point.X) <= _snappingTolerance && Math.Abs(vertex.Y - point.Y) <= _snappingTolerance)
+				.OrderBy(vertex => Math.Sqrt(Math.Pow(vertex.X - point.X, 2) + Math.Pow(vertex.Y - point.Y, 2)))
+				.FirstOrDefault();
 		}
 
 		public PointF GetSnappedCursorPosition(PointF originalPos, Vertex snappedVertex)

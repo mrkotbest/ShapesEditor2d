@@ -45,6 +45,12 @@
 			rtsPointCircle = new ToolStripMenuItem();
 			rtsPointRect = new ToolStripMenuItem();
 			rtsPointTriangle = new ToolStripMenuItem();
+			rtsLine = new ToolStripDropDownButton();
+			rtsLineIntersection = new ToolStripMenuItem();
+			rtsLineLength = new ToolStripMenuItem();
+			rtsLineExtend = new ToolStripMenuItem();
+			rtsLineRotate = new ToolStripMenuItem();
+			rtsLineTransform = new ToolStripMenuItem();
 			ts.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)drawingBox).BeginInit();
 			ss.SuspendLayout();
@@ -53,6 +59,7 @@
 			// 
 			// ts
 			// 
+			ts.GripStyle = ToolStripGripStyle.Hidden;
 			ts.Items.AddRange(new ToolStripItem[] { tsDraw, tsSelection, tsSnap });
 			ts.Location = new Point(0, 0);
 			ts.Name = "ts";
@@ -132,7 +139,8 @@
 			// toolStrip1
 			// 
 			toolStrip1.Dock = DockStyle.Right;
-			toolStrip1.Items.AddRange(new ToolStripItem[] { rtsPoint });
+			toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
+			toolStrip1.Items.AddRange(new ToolStripItem[] { rtsPoint, rtsLine });
 			toolStrip1.Location = new Point(1135, 25);
 			toolStrip1.Name = "toolStrip1";
 			toolStrip1.Size = new Size(49, 614);
@@ -184,6 +192,51 @@
 			rtsPointTriangle.Text = "Draw Triangle";
 			rtsPointTriangle.Click += rtsPointTriangle_Click;
 			// 
+			// rtsLine
+			// 
+			rtsLine.DisplayStyle = ToolStripItemDisplayStyle.Text;
+			rtsLine.DropDownItems.AddRange(new ToolStripItem[] { rtsLineIntersection, rtsLineLength, rtsLineExtend, rtsLineRotate, rtsLineTransform });
+			rtsLine.Image = (Image)resources.GetObject("rtsLine.Image");
+			rtsLine.ImageTransparentColor = Color.Magenta;
+			rtsLine.Name = "rtsLine";
+			rtsLine.Size = new Size(46, 19);
+			rtsLine.Text = "Line";
+			// 
+			// rtsLineIntersection
+			// 
+			rtsLineIntersection.Name = "rtsLineIntersection";
+			rtsLineIntersection.Size = new Size(167, 22);
+			rtsLineIntersection.Text = "Intersection Point";
+			rtsLineIntersection.Click += rtsLineIntersection_Click;
+			// 
+			// rtsLineLength
+			// 
+			rtsLineLength.Name = "rtsLineLength";
+			rtsLineLength.Size = new Size(167, 22);
+			rtsLineLength.Text = "Length";
+			rtsLineLength.Click += rtsLineLength_Click;
+			// 
+			// rtsLineExtend
+			// 
+			rtsLineExtend.Name = "rtsLineExtend";
+			rtsLineExtend.Size = new Size(167, 22);
+			rtsLineExtend.Text = "Extend";
+			rtsLineExtend.Click += rtsLineExtend_Click;
+			// 
+			// rtsLineRotate
+			// 
+			rtsLineRotate.Name = "rtsLineRotate";
+			rtsLineRotate.Size = new Size(167, 22);
+			rtsLineRotate.Text = "Rotate";
+			rtsLineRotate.Click += rtsLineRotate_Click;
+			// 
+			// rtsLineTransform
+			// 
+			rtsLineTransform.Name = "rtsLineTransform";
+			rtsLineTransform.Size = new Size(167, 22);
+			rtsLineTransform.Text = "Transform";
+			rtsLineTransform.Click += rtsLineTransform_Click;
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
@@ -227,5 +280,11 @@
 		private ToolStripMenuItem rtsPointCircle;
 		private ToolStripMenuItem rtsPointRect;
 		private ToolStripMenuItem rtsPointTriangle;
+		private ToolStripDropDownButton rtsLine;
+		private ToolStripMenuItem rtsLineIntersection;
+		private ToolStripMenuItem rtsLineLength;
+		private ToolStripMenuItem rtsLineExtend;
+		private ToolStripMenuItem rtsLineRotate;
+		private ToolStripMenuItem rtsLineTransform;
 	}
 }

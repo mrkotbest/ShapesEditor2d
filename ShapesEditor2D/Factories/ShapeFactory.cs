@@ -21,7 +21,7 @@ namespace ShapesEditor2D.Factories
 			if (vertices.First().Equals(vertices.Last()))
 				return null;
 
-			var existingPolyline = GetLastAddedShape<Polyline>();
+			var existingPolyline = GetLastAddedShape<Polygon>();
 			if (existingPolyline?.Vertices[0].Equals(vertices[0]) == true)
 			{
 				existingPolyline.AddVertex(vertices.Last());
@@ -58,22 +58,19 @@ namespace ShapesEditor2D.Factories
 		}
 
 		public static T GetLastAddedShape<T>() where T : Shape
+			=> Shapes.OfType<T>().LastOrDefault();
+
+		public static void RemoveLastShape<T>() where T : Shape
 		{
-			for (int i = Shapes.Count - 1; i >= 0; i--)
-			{
-				if (Shapes[i] is T shape)
-					return shape;
-			}
-			return null;
+			var lastShape = GetLastAddedShape<T>();
+			if (lastShape != null)
+				Shapes.Remove(lastShape);
 		}
 
-		public static Shape GetShapeAtLocation(Point location, double radius)
-		{
-			var point = new Vertex(location.X, location.Y);
-			return Shapes.FirstOrDefault(shape => shape.GetVertices().Any(vertex => vertex.DistanceTo(point) <= radius));
-		}
+		public static Shape GetShapeAtLocation(Point location, float radius = 10)
+			=> Shapes.FirstOrDefault(shape => shape.GetVertices().Any(vertex => vertex.DistanceTo(location) <= radius));
 
-		public static Vertex GetVertexAtPoint(Point point, double radius = 10)
-			=> GetAllVertices().FirstOrDefault(v => v.DistanceTo(new Vertex(point.X, point.Y)) <= radius);
+		public static Vertex GetVertexAtPoint(Point point, float radius = 10)
+			=> GetAllVertices().FirstOrDefault(v => v.DistanceTo(point) <= radius);
 	}
 }

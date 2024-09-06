@@ -7,8 +7,8 @@
 
 		public virtual void SetSelected(bool isSelected) => IsSelected = isSelected;
 		public abstract IEnumerable<Vertex> GetVertices();
-		public abstract void Draw(Graphics g);
-		public abstract void Transform(int x, int y);
+		public abstract void Draw(Graphics g, bool length = false);
+		public abstract void Translate(double distance, double angle);
 		public abstract bool ContainsPoint(Vertex vertex);
 	}
 }

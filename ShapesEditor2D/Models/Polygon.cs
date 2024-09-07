@@ -39,6 +39,18 @@
 		}
 
 		public override string ToString()
-			=> $"Polygon {string.Join(" -> ", Vertices.Select(v => $"{v}"))}";
+		{
+			if (Vertices.Count == 0)
+				return "Polygon with no vertices";
+
+			var start = Vertices[0];
+			var endPoints = Vertices.Skip(Math.Max(0, Vertices.Count - 4)).Take(3);
+
+			var result = Vertices.Count > 4
+				? $"{start} ... {string.Join(" -> ", endPoints)}"
+				: string.Join(" -> ", Vertices);
+
+			return $"Polygon {result}";
+		}
 	}
 }

@@ -4,8 +4,8 @@ namespace ShapesEditor2D.Models
 {
 	public class Vertex : Shape
 	{
-		public int X { get; private set; }
-		public int Y { get; private set; }
+		public int X { get; set; }
+		public int Y { get; set; }
 
 		public Vertex(int x, int y)
 		{
@@ -26,10 +26,16 @@ namespace ShapesEditor2D.Models
 				g.FillEllipse(Brushes.Black, X - 3, Y - 3, 6, 6);
 
 			if (length)
+			{
 				g.FillEllipse(Brushes.Red, X - 5, Y - 5, 10, 10);
+				using (Font font = new Font("Arial", 10, FontStyle.Bold))
+				{
+					g.DrawString(ToString(), font, Brushes.Red, new PointF(X, Y));
+				}
+			}
 		}
 
-		public override void Translate(double x, double y) {  }
+		public override void Translate(int x, int y) {  }
 
 		public override bool ContainsPoint(Vertex vertex)
 			=> Equals(vertex);

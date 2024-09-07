@@ -6,6 +6,5 @@
 
 		void AddVertex(Vertex vertex);
 		void RemoveVertex(Vertex vertex);
-		bool ContainsPoint(Vertex vertex);
 	}
 }

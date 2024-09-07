@@ -35,11 +35,15 @@ namespace ShapesEditor2D.Factories
 
 		public static Polygon CreatePolygon(List<Vertex> vertices)
 		{
-			if (!vertices.First().Equals(vertices.Last()))
-				vertices.Add(vertices.First());
+			var polygonVertices = new List<Vertex>(vertices);
+			if (!polygonVertices.First().Equals(polygonVertices.Last()))
+			{
+				polygonVertices.Add(polygonVertices.First());
+			}
 
-			var polygon = new Polygon(vertices);
+			var polygon = new Polygon(polygonVertices);
 			Shapes.Add(polygon);
+
 			return polygon;
 		}
 

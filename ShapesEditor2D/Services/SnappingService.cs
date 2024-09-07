@@ -16,11 +16,11 @@ namespace ShapesEditor2D.Services
 				.FirstOrDefault();
 		}
 
-		public PointF GetSnappedCursorPosition(PointF originalPos, Vertex snappedVertex)
+		public Point GetSnappedPosition(PointF originalPos, Vertex snappedVertex)
 		{
-			float newX = originalPos.X + (snappedVertex.X - originalPos.X) * _magnetStrength;
-			float newY = originalPos.Y + (snappedVertex.Y - originalPos.Y) * _magnetStrength;
-			return new PointF(newX, newY);
+			int newX = (int)(originalPos.X + (snappedVertex.X - originalPos.X) * _magnetStrength);
+			int newY = (int)(originalPos.Y + (snappedVertex.Y - originalPos.Y) * _magnetStrength);
+			return new Point(newX, newY);
 		}
 
 		public bool ShouldClosePolygon(List<Vertex> vertices)

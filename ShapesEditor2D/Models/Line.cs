@@ -1,4 +1,7 @@
-﻿namespace ShapesEditor2D.Models
+﻿using System.Collections.Generic;
+using System.Drawing;
+
+namespace ShapesEditor2D.Models
 {
 	public class Line : Shape
 	{
@@ -32,19 +35,22 @@
 				g.DrawLine(pen, Start.X, Start.Y, End.X, End.Y);
 			}
 
-			Start.Draw(g);
-			End.Draw(g);
-
 			if (length)
 			{
+				using (Pen pen = new(IsSelected ? Color.RosyBrown : Color.Black, IsSelected ? 2 : 1))
+				{
+					g.DrawLine(pen, Start.X, Start.Y, End.X, End.Y);
+				}
 				using (Font font = new("Arial", 10, FontStyle.Bold))
 				{
-					g.DrawString(GetLength().ToString("F2"), font, Brushes.Red, GetMid());
+					g.DrawString(GetLength().ToString("F2"), font, Brushes.Red, GetMidPoint());
 				}
 			}
+			Start.Draw(g);
+			End.Draw(g);
 		}
 
-		public override void Translate(double x, double y)
+		public override void Translate(int x, int y)
 		{
 			var translationMatrix = Matrix.CreateTranslationMatrix(x, y);
 			Start = translationMatrix.Apply(Start);
@@ -71,24 +77,36 @@
 		public double GetLength()
 			=> Start.DistanceTo(End);
 
-		public PointF GetMid()
+		public PointF GetMidPoint()
 			=> new PointF((Start.X + End.X) / 2, (Start.Y + End.Y) / 2);
 
-		public Vertex Intersect(Shape someShape)
+		public List<Vertex> Intersect(Shape someShape)
 		{
+			var intersections = new List<Vertex>();
+
 			switch (someShape)
 			{
 				case Line line:
-					return IntersectWithLine(line);
+					var intersectionWithLine = IntersectWithLine(line);
+					if (intersectionWithLine != null && intersectionWithLine.Any())
+						intersections.AddRange(intersectionWithLine);
+					break;
 				case Polyline polyline:
-					return IntersectWithPolyline(polyline);
+					var intersectionsWithPolyline = IntersectWithPolyline(polyline);
+					if (intersectionsWithPolyline != null && intersectionsWithPolyline.Any())
+						intersections.AddRange(intersectionsWithPolyline);
+					break;
 				default:
 					return null;
 			}
+
+			return intersections;
 		}
 
-		private Vertex IntersectWithLine(Line line)
+		private List<Vertex> IntersectWithLine(Line line)
 		{
+			var intersections = new List<Vertex>();
+
 			var dir1 = new Vertex(End.X - Start.X, End.Y - Start.Y);
 			var dir2 = new Vertex(line.End.X - line.Start.X, line.End.Y - line.Start.Y);
 			var diff = new Vertex(line.Start.X - Start.X, line.Start.Y - Start.Y);
@@ -105,35 +123,40 @@
 			{
 				int intersectionX = (int)(Start.X + t1 * dir1.X);
 				int intersectionY = (int)(Start.Y + t1 * dir1.Y);
-				return new Vertex(intersectionX, intersectionY);
+				intersections.Add(new Vertex(intersectionX, intersectionY));
 			}
-			return null;
+
+			return intersections;
 		}
 
-		private Vertex IntersectWithPolyline(Polyline polyline)
+		private List<Vertex> IntersectWithPolyline(Polyline polyline)
 		{
+			var intersections = new List<Vertex>();
+
 			for (int i = 0; i < polyline.Vertices.Count - 1; i++)
 			{
 				var edge = new Line(polyline.Vertices[i], polyline.Vertices[i + 1]);
-				var intersection = IntersectWithLine(edge);
-				if (intersection != null)
-					return intersection;
+				var vertexIntersections = IntersectWithLine(edge);
+				intersections.AddRange(vertexIntersections);
 			}
-			return null;
+
+			return intersections;
 		}
 
-		private Vertex IntersectWithPolygon(Polygon polygon)
+		private List<Vertex> IntersectWithPolygon(Polygon polygon)
 		{
+			var intersections = new List<Vertex>();
+
 			for (int i = 0; i < polygon.Vertices.Count; i++)
 			{
 				var start = polygon.Vertices[i];
 				var end = polygon.Vertices[(i + 1) % polygon.Vertices.Count];
 				var edge = new Line(start, end);
-				var intersection = IntersectWithLine(edge);
-				if (intersection != null)
-					return intersection;
+				var vertexIntersections = IntersectWithLine(edge);
+				intersections.AddRange(vertexIntersections);
 			}
-			return null;
+
+			return intersections;
 		}
 
 		public override string ToString()

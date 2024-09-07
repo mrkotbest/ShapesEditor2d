@@ -9,7 +9,7 @@
 			_matrix = matrix;
 		}
 
-		public static Matrix CreateTranslationMatrix(double x, double y)
+		public static Matrix CreateTranslationMatrix(int x, int y)
 		{
 			double[,] translationMatrix = new double[,]
 			{

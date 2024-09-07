@@ -1,6 +1,7 @@
 using ShapesEditor2D.Factories;
 using ShapesEditor2D.Helpers;
 using ShapesEditor2D.Models;
+using ShapesEditor2D.Models.Enums;
 using ShapesEditor2D.Services;
 
 namespace ShapesEditor2D
@@ -8,7 +9,8 @@ namespace ShapesEditor2D
 	public partial class MainForm : Form
 	{
 		private Graphics _g;
-		private Mode _mode = Mode.None;
+		private MainMode _mode = MainMode.None;
+		private Mode _modee = Mode.None;
 		private SelectionService _selectionService;
 		private SnappingService _snapService;
 		private List<Vertex> _currentVertices;
@@ -31,33 +33,34 @@ namespace ShapesEditor2D
 			_currentVertices = new List<Vertex>();
 		}
 
+		#region MouseEvents
 		private void drawingBox_MouseClick(object sender, MouseEventArgs e)
 		{
 			switch (_mode)
 			{
-				case Mode.Draw:
+				case MainMode.Draw:
 					HandleDrawingMode(e.Location);
 					break;
-				case Mode.Select:
+				case MainMode.Select:
 					HandleSelectionMode(e.Location);
 					break;
-				case Mode.None:
-					if (_pointCircle is true || _pointRect is true || _pointTriangle is true)
+				case MainMode.None:
+					if (_modee == Mode.PointCircle || _modee == Mode.PointRect || _modee == Mode.PointTriangle)
 					{
 						var vertex = ShapeFactory.GetVertexAtPoint(new Point(e.X, e.Y));
 						if (vertex != null)
 						{
-							if (_pointCircle)
+							if (_modee == Mode.PointCircle)
 							{
 								ShapeFactory.Shapes.Add(vertex.CreateCircleAroundPoint(30));
 								ssInfo.Text = "Создан круг";
 							}
-							else if (_pointRect)
+							else if (_modee == Mode.PointRect)
 							{
 								ShapeFactory.Shapes.Add(vertex.CreateSquareAroundPoint(30));
 								ssInfo.Text = "Создан квадрат";
 							}
-							else if (_pointTriangle)
+							else if (_modee == Mode.PointTriangle)
 							{
 								ShapeFactory.Shapes.Add(vertex.CreateTriangleAroundPoint(30));
 								ssInfo.Text = "Создан треугольник";
@@ -65,14 +68,12 @@ namespace ShapesEditor2D
 						}
 					}
 					break;
-				default:
-					break;
 			}
 			drawingBox.Invalidate();
 		}
 		private void drawingBox_MouseDown(object sender, MouseEventArgs e)
 		{
-			if (_mode == Mode.Select)
+			if (_mode == MainMode.Select)
 			{
 				_selectionStart = e.Location;
 				_isSelecting = true;
@@ -94,17 +95,18 @@ namespace ShapesEditor2D
 			if (_isSnapping)
 				SnapTo(e.Location, true);
 
-			if (_isClosestPoint)
+			if (_modee == Mode.ClosestPoint)
 			{
 				_selectionService.ClearSelection();
 				_selectionService.SelectVertex(Vertex.GetClosestVertex(e.Location));
 				drawingBox.Invalidate();
 			}
 
-			if (_isPointBelongsTo && ShapeFactory.GetShapeAtLocation(e.Location, 12) is { } shape)
+			if (_modee == Mode.PointBelongsTo && ShapeFactory.GetShapeAtLocation(e.Location, 12) is { } shape)
 			{
-				bool isWithinRadius = shape.GetVertices().Any(vertex => vertex.DistanceTo(e.Location) <= 6);
-				ssInfo.Text = isWithinRadius ? $"{e.Location} принадлежит объекту {shape}" : string.Empty;
+				ssInfo.Text = shape.GetVertices().Any(vertex => vertex.DistanceTo(e.Location) <= 6)
+					? $"{e.Location} принадлежит объекту {shape}"
+					: string.Empty;
 				SnapTo(e.Location);
 			}
 		}
@@ -117,16 +119,19 @@ namespace ShapesEditor2D
 			{
 				_selectionService.AddSelectedShapesFrom(_selectionRectangle);
 				_selectionRectangle = Rectangle.Empty;
-				if (_selectionService.SelectedShapes.Count != 0)
+
+				var selectedShapes = _selectionService.SelectedShapes;
+				if (selectedShapes.Count != 0)
 				{
-					var info = string.Join(" \\ ", _selectionService.SelectedShapes
+					ssInfo.Text = $"Найдено объектов:\n{string.Join(" \\ ", selectedShapes
 						.GroupBy(shape => shape.GetType())
-						.Select(group => $"{group.Key.Name}: {group.Count()}"));
-					ssInfo.Text = $"Найдено объектов:\n{info}";
+						.Select(group => $"{group.Key.Name}: {group.Count()}"))}";
 				}
 			}
 		}
+		#endregion
 
+		#region Handlers
 		private void HandleDrawingMode(Point cursorLocation)
 		{
 			_currentVertices.Add(new Vertex(cursorLocation.X, cursorLocation.Y));
@@ -172,41 +177,34 @@ namespace ShapesEditor2D
 		private void HandleSelectionMode(Point cursorLocation)
 		{
 			// Линии
-			if (_isLineIntersection) IntersectionLine();
-			if (_isLineLength) LineLength();
-			if (_isLineExtend) ExtendLine(cursorLocation);
-			if (_isLineRotate) RotateLine(cursorLocation);
-			if (_isLineTranslate) TranslateLine(cursorLocation);
+			if (_modee == Mode.LineIntersection) IntersectionLine();
+			if (_modee == Mode.LineLength) LineLength();
+			if (_modee == Mode.LineExtend) ExtendLine(cursorLocation);
+			if (_modee == Mode.LineRotate) RotateLine(cursorLocation);
+			if (_modee == Mode.LineTranslate) TranslateLine(cursorLocation);
 
 			// Полилинии
-			if (_isPolylineIntersection) PolylineIntersection();
-			if (_isPolylineLength) PolylineLength();
-			if (_isPolylineSmooth) SmoothPolyline();
-			if (_isPolylineAngle) PolylineAngle();
-			if (_isPolylineRotate) RotatePolyline(cursorLocation);
-			if (_isPolylineTranslate) TranslatePolyline(cursorLocation);
-			if (_isPolylineCreatePlane) CreatePolylinePlane();
-			if (_isPolylineDirection) PolylineDirection();
+			if (_modee == Mode.PolylineIntersection) PolylineIntersection();
+			if (_modee == Mode.PolylineLength) PolylineLength();
+			if (_modee == Mode.PolylineSmooth) SmoothPolyline();
+			if (_modee == Mode.PolylineAngle) PolylineAngle();
+			if (_modee == Mode.PolylineRotate) RotatePolyline(cursorLocation);
+			if (_modee == Mode.PolylineTranslate) TranslatePolyline(cursorLocation);
+			if (_modee == Mode.PolylineCreatePlane) CreatePolylinePlane();
+			if (_modee == Mode.PolylineDirection) PolylineDirection();
 		}
+		#endregion
 
+		#region Line
 		private void IntersectionLine()
 		{
 			var selectedLines = _selectionService.GetSelectedShapesOfType<Line>();
+			if (selectedLines == null || !selectedLines.Any()) return;
 
-			foreach (var selectedLine in selectedLines)
-			{
-				foreach (var shape in ShapeFactory.Shapes.Where(s => s != selectedLine))
-				{
-					var intersections = selectedLine.Intersect(shape);
-					if (intersections != null && intersections.Count != 0)
-					{
-						foreach (var intersection in intersections)
-						{
-							_selectionService.SelectVertex(intersection);
-						}
-					}
-				}
-			}
+			selectedLines.SelectMany(selectedLine => ShapeFactory.Shapes.Where(shape => shape != selectedLine)
+						.SelectMany(shape => selectedLine.Intersect(shape) ?? Enumerable.Empty<Vertex>())).ToList()
+						.ForEach(intersection => _selectionService.SelectVertex(intersection));
+
 			ssInfo.Text = $"Найдено {_selectionService.SelectedVertices.Count} пересечений";
 		}
 		private void LineLength()
@@ -217,8 +215,7 @@ namespace ShapesEditor2D
 				ssInfo.Text = "Нет выделенных линий для получения длины";
 				return;
 			}
-			double totalLength = selectedLines.Sum(line => line.GetLength());
-			ssInfo.Text = $"Суммарная длина выбранных линий: {totalLength:F2}";
+			ssInfo.Text = $"Суммарная длина выбранных линий: {selectedLines.Sum(line => line.GetLength()):F2}";
 		}
 		private void ExtendLine(Point newEndPoint)
 		{
@@ -228,40 +225,32 @@ namespace ShapesEditor2D
 				ssInfo.Text = "Нет выделенных линий для продления";
 				return;
 			}
-			foreach (var selectedLine in selectedLines)
-			{
-				var originalLine = ShapeFactory.Shapes.OfType<Line>().FirstOrDefault(line => line.Equals(selectedLine));
-				originalLine?.ExtendEnd(new Vertex(newEndPoint.X, newEndPoint.Y));
-			}
+
+			ShapeFactory.Shapes.OfType<Line>()
+				.Where(line => selectedLines.Contains(line))
+				.ToList()
+				.ForEach(line => line.ExtendEnd(new Vertex(newEndPoint.X, newEndPoint.Y)));
 		}
 		private void RotateLine(Point cursorLocation)
 		{
 			var selectedLines = _selectionService.GetSelectedShapesOfType<Line>();
-
 			if (selectedLines == null || !selectedLines.Any())
 			{
 				ssInfo.Text = "Нет выделенных линий для поворота";
 				return;
 			}
 
-			foreach (var selectedLine in selectedLines)
-			{
-				var originalLine = ShapeFactory.Shapes.OfType<Line>()
-					.FirstOrDefault(line => line.Equals(selectedLine));
-
-				double angle = GetAngleBetweenCursorAndLine(cursorLocation, originalLine);
-				originalLine?.Rotate(angle);
-			}
+			ShapeFactory.Shapes.OfType<Line>()
+				.Where(line => selectedLines.Contains(line))
+				.ToList()
+				.ForEach(line => line.Rotate(GetAngleBetweenCursorAndLine(cursorLocation, line)));
 		}
 		private static double GetAngleBetweenCursorAndLine(Point cursorLocation, Line line)
 		{
 			var lineVector = new Vertex(line.End.X - line.Start.X, line.End.Y - line.Start.Y);
 			var cursorVector = new Vertex(cursorLocation.X - line.Start.X, cursorLocation.Y - line.Start.Y);
 
-			double lineAngle = Math.Atan2(lineVector.Y, lineVector.X);
-			double cursorAngle = Math.Atan2(cursorVector.Y, cursorVector.X);
-
-			return cursorAngle - lineAngle;
+			return Math.Atan2(cursorVector.Y, cursorVector.X) - Math.Atan2(lineVector.Y, lineVector.X);
 		}
 		private void TranslateLine(Point newLocation)
 		{
@@ -278,155 +267,118 @@ namespace ShapesEditor2D
 			double offsetX = newLocation.X - averageX;
 			double offsetY = newLocation.Y - averageY;
 
-			foreach (var selectedLine in selectedLines)
-			{
-				var originalLine = ShapeFactory.Shapes.OfType<Line>().FirstOrDefault(line => line.Equals(selectedLine));
-				originalLine?.Translate((int)offsetX, (int)offsetY);
-			}
+			ShapeFactory.Shapes.OfType<Line>()
+				.Where(line => selectedLines.Contains(line))
+				.ToList()
+				.ForEach(line => line.Translate((int)offsetX, (int)offsetY));
 		}
+		#endregion
 
+		#region Polyline
 		private void PolylineIntersection()
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-			foreach (var selectedPolyline in selectedPolylines)
+			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline =>
 			{
-				foreach (var shape in ShapeFactory.Shapes.Where(s => s != selectedPolyline))
-				{
-					var intersections = selectedPolyline.Intersect(shape);
-					if (intersections != null && intersections.Any())
-					{
-						foreach (var intersection in intersections)
-						{
-							_selectionService.SelectVertex(intersection);
-						}
-					}
-				}
-			}
+				ShapeFactory.Shapes
+					.Where(shape => shape != polyline)
+					.SelectMany(shape => polyline.Intersect(shape) ?? Enumerable.Empty<Vertex>())
+					.ToList()
+					.ForEach(intersection => _selectionService.SelectVertex(intersection));
+			});
+
 			ssInfo.Text = $"Найдено {_selectionService.SelectedVertices.Count} пересечений для полилинии";
 		}
 		private void PolylineLength()
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-
-			if (selectedPolylines == null || !selectedPolylines.Any())
+			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>().ToList();
+			if (selectedPolylines.Count == 0)
 			{
-				ssInfo.Text = "Нет выделенных полилиний.";
+				ssInfo.Text = $"Нет выделенных {selectedPolylines.GetType().Name}";
 				return;
 			}
-			
-			double totalLength = 0;
-			totalLength += selectedPolylines.Sum(polyline => polyline.GetLength());
 
-			ssInfo.Text = $"Суммарная длина полилиний: {totalLength:F2}";
+			double totalLength = selectedPolylines.Sum(polyline => polyline.GetLength());
+			ssInfo.Text = $"Суммарная длина: {totalLength:F2}";
 		}
 		private void SmoothPolyline()
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-			foreach (var selectedPolyline in selectedPolylines)
-				selectedPolyline.Smooth();
-
-			ssInfo.Text = "Полилиния сглажена";
+			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline => polyline.Smooth());
 		}
 		private void PolylineAngle()
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-			foreach (var selectedPolyline in selectedPolylines)
+			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline =>
 			{
-				double angle = selectedPolyline.GetAngleBetweenThreePoints(1);
-				ssInfo.Text = $"Угол между точками полилинии: {Math.Round(angle * (180 / Math.PI), 2)}°";
-			}
+				double angle = polyline.GetAngleBetweenThreePoints(1);
+				ssInfo.Text = $"Угол между точками {polyline.GetType().Name}: {Math.Round(angle * (180 / Math.PI), 2)}°";
+			});
 		}
 		private void RotatePolyline(Point cursorLocation)
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-			foreach (var selectedPolyline in selectedPolylines)
+			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline =>
 			{
-				var firstVertex = selectedPolyline.Vertices.FirstOrDefault();
-				if (firstVertex != null)
-				{
-					double angle = GetAngleBetweenCursorAndPoint(cursorLocation, firstVertex);
-					selectedPolyline.RotateAroundPoint(firstVertex, angle);
-				}
-			}
-			ssInfo.Text = "Полилиния повернута";
+				var firstVertex = polyline.Vertices.First();
+				polyline.RotateAroundPoint(firstVertex, GetAngleBetweenCursorAndPoint(cursorLocation, firstVertex));
+			});
 		}
-		private static double GetAngleBetweenCursorAndPoint(Point cursorLocation, Vertex point)
+		private static double GetAngleBetweenCursorAndPoint(Point cursorLocation, Vertex vertex)
 		{
-			var vectorToCursor = new Vertex(cursorLocation.X - point.X, cursorLocation.Y - point.Y);
-			double angle = Math.Atan2(vectorToCursor.Y, vectorToCursor.X);
-			return angle;
+			double x = cursorLocation.X - vertex.X;
+			double y = cursorLocation.Y - vertex.Y;
+			return Math.Atan2(y, x);
 		}
 		private void TranslatePolyline(Point cursorLocation)
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-			if (selectedPolylines == null || !selectedPolylines.Any())
+			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>()
+				.Where(polyline => polyline is not Polygon)
+				.ToList();
+
+			if (selectedPolylines.Count == 0)
 			{
 				ssInfo.Text = "Нет выделенных полилиний для перемещения";
 				return;
 			}
 
-			double averageX = selectedPolylines.Average(polyline => polyline.Vertices.Average(v => v.X));
-			double averageY = selectedPolylines.Average(polyline => polyline.Vertices.Average(v => v.Y));
+			var averagePoint = new Vertex(
+				(int)selectedPolylines.Average(polyline => polyline.Vertices.Average(v => v.X)),
+				(int)selectedPolylines.Average(polyline => polyline.Vertices.Average(v => v.Y)));
 
-			double offsetX = cursorLocation.X - averageX;
-			double offsetY = cursorLocation.Y - averageY;
+			int offsetX = cursorLocation.X - averagePoint.X;
+			int offsetY = cursorLocation.Y - averagePoint.Y;
 
-			foreach (var selectedPolyline in selectedPolylines)
-			{
-				var originalPolyline = ShapeFactory.Shapes.OfType<Polyline>().FirstOrDefault(polyline => polyline.Equals(selectedPolyline));
-				originalPolyline?.Translate((int)offsetX, (int)offsetY);
-			}
-			ssInfo.Text = "Полилиния перемещена";
+			selectedPolylines.ForEach(polyline => polyline.Translate(offsetX, offsetY));
 		}
 		private void CreatePolylinePlane()
 		{
-			var selectedShapes = _selectionService.GetSelectedShapesOfType<Polyline>();
-			var shapesToRemove = new List<Shape>();
+			var selectedShapes = _selectionService.GetSelectedShapesOfType<Polyline>()
+				.Where(shape => shape is not Polygon && shape is Polyline polyline && !polyline.IsPolygonCreated)
+				.Cast<Polyline>()
+				.ToList();
 
-			foreach (var shape in selectedShapes)
+			foreach (var polyline in selectedShapes)
 			{
-				if (shape is Polygon)
+				if (polyline.Vertices.Count >= 3)
 				{
-					ssInfo.Text = "Выделенный объект уже является полигоном";
-					continue;
+					ShapeFactory.CreatePolygon(polyline.Vertices);
+					_selectionService.DeselectShape(polyline);
+					ShapeFactory.RemoveShape(polyline);
+					ssInfo.Text = "Плоскость создана на основе полилинии";
 				}
-
-				if (shape is Polyline polyline)
-				{
-					if (polyline.IsPolygonCreated)
-					{
-						ssInfo.Text = "Для этой Полилинии уже создан Полигон..";
-						continue;
-					}
-
-					if (polyline.Vertices.Count >= 3)
-					{
-						ShapeFactory.CreatePolygon(polyline.Vertices);
-						polyline.IsPolygonCreated = true;
-						shapesToRemove.Add(polyline);
-						ssInfo.Text = "Плоскость создана на основе полилинии";
-					}
-					else
-						ssInfo.Text = "Недостаточно точек для создания плоскости";
-				}
-			}
-
-			foreach (var shape in shapesToRemove)
-			{
-				_selectionService.DeselectShape(shape);
-				ShapeFactory.RemoveShape(shape);
+				else
+					ssInfo.Text = "Недостаточно точек для создания плоскости";
 			}
 		}
 		private void PolylineDirection()
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>();
-			foreach (var selectedPolyline in selectedPolylines)
+			var selectedPolys = _selectionService.GetSelectedShapesOfType<Polyline>();
+			foreach (var selectedPoly in selectedPolys)
 			{
-				bool isClockwise = selectedPolyline.IsClockwise();
-				ssInfo.Text = isClockwise ? "Полилиния построена по часовой стрелке" : "Полилиния построена против часовой стрелки";
+				bool isClockwise = selectedPoly.IsClockwise();
+				ssInfo.Text = isClockwise ? $"{selectedPoly.GetType().Name} построена по часовой стрелке" : $"{selectedPoly.GetType().Name} построена против часовой стрелки";
 			}
 		}
+		#endregion
 
+		#region Snapping
 		private void SnapTo(Point location, bool magnet = false)
 		{
 			var snappedVertex = SnappingService.SnapToVertex(location);
@@ -445,87 +397,29 @@ namespace ShapesEditor2D
 			Point screenPoint = drawingBox.PointToScreen(newCursorPos);
 			CursorHelper.SetCursorPos(screenPoint.X, screenPoint.Y);
 		}
+		#endregion
 
 		private void drawingBox_Paint(object sender, PaintEventArgs e)
 		{
-			foreach (var shape in ShapeFactory.Shapes)
-				shape.Draw(e.Graphics);
+			ShapeFactory.Shapes.ForEach(shape => shape.Draw(e.Graphics));
 
-			if (_mode == Mode.Select)
+			if (_mode == MainMode.Select)
 			{
 				using (Pen pen = new Pen(Color.Blue, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot })
 				{
 					e.Graphics.DrawRectangle(pen, _selectionRectangle);
 				}
 
-				foreach (var shape in _selectionService.SelectedShapes)
-					shape.Draw(e.Graphics);
+				_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics));
+				_selectionService.SelectedVertices.ForEach(vertex => vertex.Draw(e.Graphics));
 
-				foreach (var vertex in _selectionService.SelectedVertices)
-					vertex.Draw(e.Graphics);
+				if (_modee == Mode.LineLength || _modee == Mode.PolylineLength)
+					_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics, true));
 
-				if (_isLineLength || _isPolylineLength)
-				{
-					foreach (var shape in _selectionService.SelectedShapes)
-						shape.Draw(e.Graphics, true);
-				}
-
-				if (_isLineIntersection || _isPolylineIntersection)
-				{
-					foreach (var vertex in _selectionService.SelectedVertices)
-						vertex.Draw(e.Graphics, true);
-				}
+				if (_modee == Mode.LineIntersection || _modee == Mode.PolylineIntersection)
+					_selectionService.SelectedVertices.ForEach(vertex => vertex.Draw(e.Graphics, true));
 			}
 		}
-		private void tsDraw_Click(object sender, EventArgs e)
-		{
-			if (_mode != Mode.Draw)
-			{
-				ResetEveryMode();
-				_mode = Mode.Draw;
-				_selectionService.ClearSelection();
-				ssInfoActivated.Text = "Режим рисования активирован";
-			}
-			else if (_mode == Mode.Draw)
-			{
-				_mode = Mode.None;
-				_currentVertices.Clear();
-				ssInfoActivated.Text = "Режим рисования завершен";
-			}
-		}
-		private void tsSelection_Click(object sender, EventArgs e)
-		{
-			if (_mode != Mode.Select)
-			{
-				ResetEveryMode();
-				_mode = Mode.Select;
-				ssInfoActivated.Text = "Режим выделения активирован";
-			}
-			else if (_mode == Mode.Select)
-			{
-				_mode = Mode.None;
-				_selectionService.ClearSelection();
-				ssInfoActivated.Text = "Режим выделения закончен";
-			}
-		}
-		private void tsSnap_Click(object sender, EventArgs e)
-		{
-			_isSnapping = !_isSnapping;
-			ssInfoActivated.Text = _isSnapping ? "Режим привязки включен" : "Режим привязки выключен";
-		}
-		private void ResetEveryMode()
-		{
-			_mode = Mode.None;
-			_currentVertices.Clear();
-			_selectionService.ClearSelection();
-			ResetAllPointModes();
-			ResetAllLineModes();
-			ResetAllPolylineModes();
-			drawingBox.Invalidate();
-			ssInfo.Text = string.Empty;
-			ssInfoActivated.Text = "Все режими завершены";
-		}
-		
 		private void MainForm_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Escape)
@@ -538,50 +432,100 @@ namespace ShapesEditor2D
 				drawingBox.Invalidate();
 			}
 		}
-
-		private void ToggleMode(ref bool mode, Action resetModes, string modeName)
+		private void ResetEveryMode()
 		{
-			if (mode)
+			_mode = MainMode.None;
+			_modee = Mode.None;
+			_currentVertices.Clear();
+			_selectionService.ClearSelection();
+			drawingBox.Invalidate();
+			ssInfo.Text = string.Empty;
+			ssInfoActivated.Text = "Все режими завершены";
+		}
+
+		#region UpToolStrip
+		private void tsDraw_Click(object sender, EventArgs e)
+		{
+			if (_mode == MainMode.Draw)
 			{
-				resetModes();
-				ssInfoActivated.Text = $"{modeName} завершен";
+				_mode = MainMode.None;
+				_currentVertices.Clear();
+				ssInfoActivated.Text = "Режим рисования завершен";
 			}
 			else
 			{
-				resetModes();
-				mode = true;
+				ResetEveryMode();
+				_mode = MainMode.Draw;
+				_selectionService.ClearSelection();
+				ssInfoActivated.Text = "Режим рисования активирован";
+			}
+		}
+		private void tsSelection_Click(object sender, EventArgs e)
+		{
+			if (_mode == MainMode.Select)
+			{
+				_mode = MainMode.None;
+				_selectionService.ClearSelection();
+				ssInfoActivated.Text = "Режим выделения закончен";
+			}
+			else
+			{
+				ResetEveryMode();
+				_mode = MainMode.Select;
+				ssInfoActivated.Text = "Режим выделения активирован";
+			}
+		}
+		private void tsSnap_Click(object sender, EventArgs e)
+		{
+			_isSnapping = !_isSnapping;
+			ssInfoActivated.Text = _isSnapping ? "Режим привязки включен" : "Режим привязки выключен";
+		}
+		#endregion
+
+		private void ToggleMode(Mode mode, string msg)
+		{
+			if (_modee == mode)
+			{
+				_modee = Mode.None;
+				ssInfoActivated.Text = $"{msg} завершен";
+			}
+			else
+			{
+				_modee = Mode.None;
+				_modee = mode;
+				ssInfoActivated.Text = $"{msg} начат";
+
 				_selectionService.ClearSelection();
 				ssInfo.Text = string.Empty;
-				ssInfoActivated.Text = $"{modeName} начат";
 				drawingBox.Invalidate();
 			}
-		}	
-		
-		private bool _isClosestPoint, _isPointBelongsTo, _pointCircle, _pointRect, _pointTriangle;
-		private void ResetAllPointModes() => _isClosestPoint = _isPointBelongsTo = _pointCircle = _pointRect = _pointTriangle = false;
-		private void rtsPointClosestPoint_Click(object sender, EventArgs e) => ToggleMode(ref _isClosestPoint, ResetAllPointModes, "Режим ближайшей точки");
-		private void rtsPointBelongsTo_Click(object sender, EventArgs e) => ToggleMode(ref _isPointBelongsTo, ResetAllPointModes, "Режим принадлежности точки");
-		private void rtsPointCircle_Click(object sender, EventArgs e) => ToggleMode(ref _pointCircle, ResetAllPointModes, "Режим круга");
-		private void rtsPointRect_Click(object sender, EventArgs e) => ToggleMode(ref _pointRect, ResetAllPointModes, "Режим прямоугольника");
-		private void rtsPointTriangle_Click(object sender, EventArgs e) => ToggleMode(ref _pointTriangle, ResetAllPointModes, "Режим треугольника");
+		}
 
-		private bool _isLineIntersection, _isLineLength, _isLineExtend, _isLineRotate, _isLineTranslate;
-		private void ResetAllLineModes() => _isLineIntersection = _isLineLength = _isLineExtend = _isLineRotate = _isLineTranslate = false;
-		private void rtsLineIntersection_Click(object sender, EventArgs e) => ToggleMode(ref _isLineIntersection, ResetAllLineModes, "Режим пересечения линий");
-		private void rtsLineLength_Click(object sender, EventArgs e) => ToggleMode(ref _isLineLength, ResetAllLineModes, "Режим длины линии");
-		private void rtsLineExtend_Click(object sender, EventArgs e) => ToggleMode(ref _isLineExtend, ResetAllLineModes, "Режим продления линии");
-		private void rtsLineRotate_Click(object sender, EventArgs e) => ToggleMode(ref _isLineRotate, ResetAllLineModes, "Режим вращения линии");
-		private void rtsLineTransform_Click(object sender, EventArgs e) => ToggleMode(ref _isLineTranslate, ResetAllLineModes, "Режим трансформации линии");
+		#region RightToolStrip_Point
+		private void rtsPointClosestPoint_Click(object sender, EventArgs e) => ToggleMode(Mode.ClosestPoint, "Режим ближайшей точки");
+		private void rtsPointBelongsTo_Click(object sender, EventArgs e) => ToggleMode(Mode.PointBelongsTo, "Режим принадлежности точки");
+		private void rtsPointCircle_Click(object sender, EventArgs e) => ToggleMode(Mode.PointCircle, "Режим круга вокруг точки");
+		private void rtsPointRect_Click(object sender, EventArgs e) => ToggleMode(Mode.PointRect, "Режим прямоугольника вокруг точки");
+		private void rtsPointTriangle_Click(object sender, EventArgs e) => ToggleMode(Mode.PointTriangle, "Режим треугольника вокруг точки");
+		#endregion
 
-		private bool _isPolylineIntersection, _isPolylineLength, _isPolylineSmooth, _isPolylineAngle, _isPolylineRotate, _isPolylineTranslate, _isPolylineCreatePlane, _isPolylineDirection;
-		private void ResetAllPolylineModes() => _isPolylineIntersection = _isPolylineLength = _isPolylineSmooth = _isPolylineAngle = _isPolylineRotate = _isPolylineTranslate = _isPolylineCreatePlane = _isPolylineDirection = false;
-		private void rtsPolylineIntersection_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineIntersection, ResetAllPolylineModes, "Режим пересечения полилинии");
-		private void rtsPolylineLength_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineLength, ResetAllPolylineModes, "Режим длины полилинии");
-		private void rtsPolylineSmooth_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineSmooth, ResetAllPolylineModes, "Режим сглаживания полилинии");
-		private void rtsPolylineAngle_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineAngle, ResetAllPolylineModes, "Режим угла полилинии");
-		private void rtsPolylineRotate_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineRotate, ResetAllPolylineModes, "Режим вращения полилинии");
-		private void rtsPolylineTranslate_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineTranslate, ResetAllPolylineModes, "Режим перемещения полилинии");
-		private void rtsPolylineCreatePlane_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineCreatePlane, ResetAllPolylineModes, "Режим создания плоскости полилинии");
-		private void rtsPolylineDirection_Click(object sender, EventArgs e) => ToggleMode(ref _isPolylineDirection, ResetAllPolylineModes, "Режим направления полилинии");
+		#region RightToolStrip_Line
+		private void rtsLineIntersection_Click(object sender, EventArgs e) => ToggleMode(Mode.LineIntersection, "Режим пересечения линий");
+		private void rtsLineLength_Click(object sender, EventArgs e) => ToggleMode(Mode.LineLength, "Режим длины линии");
+		private void rtsLineExtend_Click(object sender, EventArgs e) => ToggleMode(Mode.LineExtend, "Режим продления линии");
+		private void rtsLineRotate_Click(object sender, EventArgs e) => ToggleMode(Mode.LineRotate, "Режим вращения линии");
+		private void rtsLineTransform_Click(object sender, EventArgs e) => ToggleMode(Mode.LineTranslate, "Режим трансформации линии");
+		#endregion
+
+		#region RightToolStrip_Polyline
+		private void rtsPolylineIntersection_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineIntersection, "Режим пересечения полилинии");
+		private void rtsPolylineLength_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineLength, "Режим длины полилинии");
+		private void rtsPolylineSmooth_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineSmooth, "Режим сглаживания полилинии");
+		private void rtsPolylineAngle_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineAngle, "Режим угла полилинии");
+		private void rtsPolylineRotate_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineRotate, "Режим вращения полилинии");
+		private void rtsPolylineTranslate_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineTranslate, "Режим перемещения полилинии");
+		private void rtsPolylineCreatePlane_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineCreatePlane, "Режим создания плоскости полилинии");
+		private void rtsPolylineDirection_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineDirection, "Режим направления полилинии");
+		#endregion
 	}
 }

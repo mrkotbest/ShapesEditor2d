@@ -3,10 +3,10 @@ using ShapesEditor2D.Models;
 
 namespace ShapesEditor2D.Services
 {
-	public class SnappingService
+	public sealed class SnappingService
 	{
-		private const float _snappingTolerance = 5.0f;
-		private float _magnetStrength = 0.3f;
+		private const float _snappingTolerance = 3.5f;
+		private float _magnetStrength = 0.25f;
 
 		public static Vertex SnapToVertex(PointF point)
 		{
@@ -23,26 +23,7 @@ namespace ShapesEditor2D.Services
 			return new Point(newX, newY);
 		}
 
-		public bool ShouldClosePolygon(List<Vertex> vertices)
-		{
-			if (vertices.Count > 2)
-			{
-				var firstVertex = vertices.First();
-				var lastVertex = vertices.Last();
-				return Math.Abs(firstVertex.X - lastVertex.X) <= _snappingTolerance &&
-					   Math.Abs(firstVertex.Y - lastVertex.Y) <= _snappingTolerance;
-			}
-			return false;
-		}
-
-		public void DrawSnappingGuide(Graphics g, List<Vertex> vertices, Point location)
-		{
-			if (ShouldClosePolygon(vertices))
-			{
-				var firstVertex = vertices.First();
-				var lastVertex = vertices.Last();
-				g.DrawLine(Pens.Red, lastVertex.X, lastVertex.Y, firstVertex.X, firstVertex.Y);
-			}
-		}
+		public bool ShouldClosePolygon(Vertex first, Vertex last)
+			=> Math.Abs(first.X - last.X) <= _snappingTolerance && Math.Abs(first.Y - last.Y) <= _snappingTolerance;
 	}
 }

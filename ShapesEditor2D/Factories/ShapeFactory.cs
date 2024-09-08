@@ -6,8 +6,11 @@ namespace ShapesEditor2D.Factories
 	{
 		public static List<Shape> Shapes { get; private set; } = new List<Shape>();
 
-		public static void CreateVertex(Vertex v)
-			=> Shapes.Add(v);
+		public static Vertex CreateVertex(Vertex v)
+		{
+			Shapes.Add(v);
+			return v;
+		}
 
 		public static Line CreateLine(List<Vertex> vertices)
 		{
@@ -35,15 +38,8 @@ namespace ShapesEditor2D.Factories
 
 		public static Polygon CreatePolygon(List<Vertex> vertices)
 		{
-			var polygonVertices = new List<Vertex>(vertices);
-			if (!polygonVertices.First().Equals(polygonVertices.Last()))
-			{
-				polygonVertices.Add(polygonVertices.First());
-			}
-
-			var polygon = new Polygon(polygonVertices);
+			var polygon = new Polygon(vertices);
 			Shapes.Add(polygon);
-
 			return polygon;
 		}
 

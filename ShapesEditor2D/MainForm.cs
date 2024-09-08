@@ -14,8 +14,7 @@ namespace ShapesEditor2D
 		private SelectionService _selectionService;
 		private SnappingService _snapService;
 		private List<Vertex> _currentVertices;
-		private bool _isSelecting = false;
-		private bool _isSnapping = false;
+		private bool _isSelecting, _isSnapping = false;
 
 		private Point _selectionStart;
 		private Rectangle _selectionRectangle;
@@ -39,34 +38,15 @@ namespace ShapesEditor2D
 			switch (_mode)
 			{
 				case MainMode.Draw:
-					HandleDrawingMode(e.Location);
+					HandleDrawMainMode(e.Location);
 					break;
 				case MainMode.Select:
-					HandleSelectionMode(e.Location);
+					HandleSelectionMainMode(e.Location);
 					break;
 				case MainMode.None:
-					if (_modee == Mode.PointCircle || _modee == Mode.PointRect || _modee == Mode.PointTriangle)
-					{
-						var vertex = ShapeFactory.GetVertexAtPoint(new Point(e.X, e.Y));
-						if (vertex != null)
-						{
-							if (_modee == Mode.PointCircle)
-							{
-								ShapeFactory.Shapes.Add(vertex.CreateCircleAroundPoint(30));
-								ssInfo.Text = "Создан круг";
-							}
-							else if (_modee == Mode.PointRect)
-							{
-								ShapeFactory.Shapes.Add(vertex.CreateSquareAroundPoint(30));
-								ssInfo.Text = "Создан квадрат";
-							}
-							else if (_modee == Mode.PointTriangle)
-							{
-								ShapeFactory.Shapes.Add(vertex.CreateTriangleAroundPoint(30));
-								ssInfo.Text = "Создан треугольник";
-							}
-						}
-					}
+					HandleNoneMainMode(e.Location);
+					break;
+				default:
 					break;
 			}
 			drawingBox.Invalidate();
@@ -132,7 +112,7 @@ namespace ShapesEditor2D
 		#endregion
 
 		#region Handlers
-		private void HandleDrawingMode(Point cursorLocation)
+		private void HandleDrawMainMode(Point cursorLocation)
 		{
 			_currentVertices.Add(new Vertex(cursorLocation.X, cursorLocation.Y));
 			int vertexCount = _currentVertices.Count;
@@ -150,20 +130,22 @@ namespace ShapesEditor2D
 			}
 			else
 			{
-				if (_snapService.ShouldClosePolygon(_currentVertices))
+				if (_snapService.ShouldClosePolygon(_currentVertices.First(), _currentVertices.Last()))
 				{
 					ShapeFactory.RemoveLastShape<Polyline>();
+					_currentVertices[^1] = _currentVertices.First();
+					_currentVertices.RemoveAt(0);
 					ShapeFactory.CreatePolygon(_currentVertices);
-					ssInfo.Text = $"Создан объект: Полигон с {vertexCount} вершинами";
+					ssInfo.Text = $"Создан объект: Полигон с {vertexCount - 1} вершинами";
 					_currentVertices.Clear();
 				}
 				else
 				{
 					var existingPolyline = ShapeFactory.GetLastAddedShape<Polyline>();
-					if (existingPolyline != null && existingPolyline.Vertices[0].Equals(_currentVertices[0]))
+					if (existingPolyline != null && existingPolyline.Vertices.First().Equals(_currentVertices[0]))
 					{
 						existingPolyline.AddVertex(_currentVertices.Last());
-						ssInfo.Text = $"Полилиния обновлена: {vertexCount} вершин.";
+						ssInfo.Text = $"Полилиния обновлена: {vertexCount} вершин";
 					}
 					else
 					{
@@ -174,29 +156,58 @@ namespace ShapesEditor2D
 				}
 			}
 		}
-		private void HandleSelectionMode(Point cursorLocation)
+		private void HandleSelectionMainMode(Point cursorLocation)
 		{
 			// Линии
-			if (_modee == Mode.LineIntersection) IntersectionLine();
+			if (_modee == Mode.LineIntersection) LineIntersection();
 			if (_modee == Mode.LineLength) LineLength();
-			if (_modee == Mode.LineExtend) ExtendLine(cursorLocation);
-			if (_modee == Mode.LineRotate) RotateLine(cursorLocation);
-			if (_modee == Mode.LineTranslate) TranslateLine(cursorLocation);
+			if (_modee == Mode.LineExtend) LineExtend(cursorLocation);
+			if (_modee == Mode.LineRotate) LineRotate(cursorLocation);
+			if (_modee == Mode.LineTranslate) LineTranslate(cursorLocation);
 
 			// Полилинии
 			if (_modee == Mode.PolylineIntersection) PolylineIntersection();
 			if (_modee == Mode.PolylineLength) PolylineLength();
-			if (_modee == Mode.PolylineSmooth) SmoothPolyline();
+			if (_modee == Mode.PolylineSmooth) PolylineSmooth();
 			if (_modee == Mode.PolylineAngle) PolylineAngle();
-			if (_modee == Mode.PolylineRotate) RotatePolyline(cursorLocation);
-			if (_modee == Mode.PolylineTranslate) TranslatePolyline(cursorLocation);
-			if (_modee == Mode.PolylineCreatePlane) CreatePolylinePlane();
+			if (_modee == Mode.PolylineRotate) PolylineRotate(cursorLocation);
+			if (_modee == Mode.PolylineTranslate) PolylineTranslate(cursorLocation);
+			if (_modee == Mode.PolylineCreatePlane) PolylineCreatePlane();
 			if (_modee == Mode.PolylineDirection) PolylineDirection();
+
+			if (_modee == Mode.PolygonArea) PolygonArea();
+			if (_modee == Mode.PolygonInscribed) PolygonInscribed();
+			if (_modee == Mode.PolygonCircumscribed) PolygonCircumscribed();
+		}
+		private void HandleNoneMainMode(Point cursorLocation)
+		{
+			if (_modee == Mode.PointCircle || _modee == Mode.PointRect || _modee == Mode.PointTriangle)
+			{
+				var vertex = ShapeFactory.GetVertexAtPoint(cursorLocation);
+				if (vertex != null)
+				{
+					if (_modee == Mode.PointCircle)
+					{
+						ShapeFactory.Shapes.Add(vertex.CreateCircleAroundPoint(30));
+						ssInfo.Text = "Создан круг";
+					}
+					else if (_modee == Mode.PointRect)
+					{
+						ShapeFactory.Shapes.Add(vertex.CreateSquareAroundPoint(30));
+						ssInfo.Text = "Создан квадрат";
+					}
+					else if (_modee == Mode.PointTriangle)
+					{
+						ShapeFactory.Shapes.Add(vertex.CreateTriangleAroundPoint(30));
+						ssInfo.Text = "Создан треугольник";
+					}
+				}
+			}
 		}
 		#endregion
 
 		#region Line
-		private void IntersectionLine()
+		private void LineIntersection()
 		{
 			var selectedLines = _selectionService.GetSelectedShapesOfType<Line>();
 			if (selectedLines == null || !selectedLines.Any()) return;
@@ -217,7 +228,7 @@ namespace ShapesEditor2D
 			}
 			ssInfo.Text = $"Суммарная длина выбранных линий: {selectedLines.Sum(line => line.GetLength()):F2}";
 		}
-		private void ExtendLine(Point newEndPoint)
+		private void LineExtend(Point cursorLocation)
 		{
 			var selectedLines = _selectionService.GetSelectedShapesOfType<Line>();
 			if (selectedLines == null || !selectedLines.Any())
@@ -229,9 +240,9 @@ namespace ShapesEditor2D
 			ShapeFactory.Shapes.OfType<Line>()
 				.Where(line => selectedLines.Contains(line))
 				.ToList()
-				.ForEach(line => line.ExtendEnd(new Vertex(newEndPoint.X, newEndPoint.Y)));
+				.ForEach(line => line.ExtendEnd(new Vertex(cursorLocation.X, cursorLocation.Y)));
 		}
-		private void RotateLine(Point cursorLocation)
+		private void LineRotate(Point cursorLocation)
 		{
 			var selectedLines = _selectionService.GetSelectedShapesOfType<Line>();
 			if (selectedLines == null || !selectedLines.Any())
@@ -243,16 +254,9 @@ namespace ShapesEditor2D
 			ShapeFactory.Shapes.OfType<Line>()
 				.Where(line => selectedLines.Contains(line))
 				.ToList()
-				.ForEach(line => line.Rotate(GetAngleBetweenCursorAndLine(cursorLocation, line)));
+				.ForEach(line => line.Rotate(cursorLocation.X, cursorLocation.Y));
 		}
-		private static double GetAngleBetweenCursorAndLine(Point cursorLocation, Line line)
-		{
-			var lineVector = new Vertex(line.End.X - line.Start.X, line.End.Y - line.Start.Y);
-			var cursorVector = new Vertex(cursorLocation.X - line.Start.X, cursorLocation.Y - line.Start.Y);
-
-			return Math.Atan2(cursorVector.Y, cursorVector.X) - Math.Atan2(lineVector.Y, lineVector.X);
-		}
-		private void TranslateLine(Point newLocation)
+		private void LineTranslate(Point cursorLocation)
 		{
 			var selectedLines = _selectionService.GetSelectedShapesOfType<Line>();
 			if (selectedLines == null || !selectedLines.Any())
@@ -264,8 +268,8 @@ namespace ShapesEditor2D
 			double averageX = selectedLines.Average(line => (line.Start.X + line.End.X) / 2);
 			double averageY = selectedLines.Average(line => (line.Start.Y + line.End.Y) / 2);
 
-			double offsetX = newLocation.X - averageX;
-			double offsetY = newLocation.Y - averageY;
+			double offsetX = cursorLocation.X - averageX;
+			double offsetY = cursorLocation.Y - averageY;
 
 			ShapeFactory.Shapes.OfType<Line>()
 				.Where(line => selectedLines.Contains(line))
@@ -277,7 +281,7 @@ namespace ShapesEditor2D
 		#region Polyline
 		private void PolylineIntersection()
 		{
-			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline =>
+			_selectionService.GetSelectedShapesOfType<Polyline>().Where(polyline => polyline is not Polygon).ToList().ForEach(polyline =>
 			{
 				ShapeFactory.Shapes
 					.Where(shape => shape != polyline)
@@ -290,43 +294,37 @@ namespace ShapesEditor2D
 		}
 		private void PolylineLength()
 		{
-			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>().ToList();
-			if (selectedPolylines.Count == 0)
+			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>().Where(polyline => polyline is not Polygon).ToList();
+			if (selectedPolylines.Count == 0 || selectedPolylines is null)
 			{
-				ssInfo.Text = $"Нет выделенных {selectedPolylines.GetType().Name}";
+				ssInfo.Text = $"Нет выделенных полилиний";
 				return;
 			}
 
 			double totalLength = selectedPolylines.Sum(polyline => polyline.GetLength());
 			ssInfo.Text = $"Суммарная длина: {totalLength:F2}";
 		}
-		private void SmoothPolyline()
+		private void PolylineSmooth()
 		{
-			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline => polyline.Smooth());
+			_selectionService.GetSelectedShapesOfType<Polyline>().Where(polyline => polyline is not Polygon).ToList()
+				.ForEach(polyline => polyline.Smooth());
 		}
 		private void PolylineAngle()
 		{
-			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline =>
+			_selectionService.GetSelectedShapesOfType<Polyline>().Where(polyline => polyline is not Polygon).ToList().ForEach(polyline =>
 			{
-				double angle = polyline.GetAngleBetweenThreePoints(1);
+				double angle = polyline.AngleBetweenThreePoints(1);
 				ssInfo.Text = $"Угол между точками {polyline.GetType().Name}: {Math.Round(angle * (180 / Math.PI), 2)}°";
 			});
 		}
-		private void RotatePolyline(Point cursorLocation)
+		private void PolylineRotate(Point cursorLocation)
 		{
-			_selectionService.GetSelectedShapesOfType<Polyline>().ToList().ForEach(polyline =>
-			{
-				var firstVertex = polyline.Vertices.First();
-				polyline.RotateAroundPoint(firstVertex, GetAngleBetweenCursorAndPoint(cursorLocation, firstVertex));
-			});
+			_selectionService.GetSelectedShapesOfType<Polyline>()
+				.Where(polyline => polyline is not Polygon)
+				.ToList()
+				.ForEach(polyline => polyline.Rotate(cursorLocation.X, cursorLocation.Y));
 		}
-		private static double GetAngleBetweenCursorAndPoint(Point cursorLocation, Vertex vertex)
-		{
-			double x = cursorLocation.X - vertex.X;
-			double y = cursorLocation.Y - vertex.Y;
-			return Math.Atan2(y, x);
-		}
-		private void TranslatePolyline(Point cursorLocation)
+		private void PolylineTranslate(Point cursorLocation)
 		{
 			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>()
 				.Where(polyline => polyline is not Polygon)
@@ -347,7 +345,7 @@ namespace ShapesEditor2D
 
 			selectedPolylines.ForEach(polyline => polyline.Translate(offsetX, offsetY));
 		}
-		private void CreatePolylinePlane()
+		private void PolylineCreatePlane()
 		{
 			var selectedShapes = _selectionService.GetSelectedShapesOfType<Polyline>()
 				.Where(shape => shape is not Polygon && shape is Polyline polyline && !polyline.IsPolygonCreated)
@@ -369,12 +367,47 @@ namespace ShapesEditor2D
 		}
 		private void PolylineDirection()
 		{
-			var selectedPolys = _selectionService.GetSelectedShapesOfType<Polyline>();
-			foreach (var selectedPoly in selectedPolys)
+			var selectedPolylines = _selectionService.GetSelectedShapesOfType<Polyline>()
+				.Where(polyline => polyline is not Polygon)
+				.ToList();
+
+			if (selectedPolylines.Count == 0)
 			{
-				bool isClockwise = selectedPoly.IsClockwise();
-				ssInfo.Text = isClockwise ? $"{selectedPoly.GetType().Name} построена по часовой стрелке" : $"{selectedPoly.GetType().Name} построена против часовой стрелки";
+				ssInfo.Text = "Нет выделенных полилиний для расчета направления";
+				return;
 			}
+
+			foreach (var selectedPolyline in selectedPolylines)
+			{
+				bool isClockwise = selectedPolyline.IsClockwise();
+				ssInfo.Text = isClockwise ? $"{selectedPolyline.GetType().Name} построена по часовой стрелке" : $"{selectedPolyline.GetType().Name} построена против часовой стрелки";
+			}
+		}
+		#endregion
+
+		#region Polygon
+		private void PolygonArea()
+		{
+			var selectedPolygons = _selectionService.GetSelectedShapesOfType<Polygon>().ToList();
+			if (selectedPolygons.Count == 0 || selectedPolygons is null)
+			{
+				ssInfo.Text = $"Нет выделенных полигонов";
+				return;
+			}
+			double totalArea = selectedPolygons.Sum(polygon => polygon.CalculateArea());
+			ssInfo.Text = $"Суммарная площадь: {totalArea:F2}";
+		}
+		private void PolygonInscribed()
+		{
+			var selectedPolygons = _selectionService.GetSelectedShapesOfType<Polygon>().ToList();
+			foreach (var polygon in selectedPolygons)
+				ssInfo.Text = $"Вписанный круг c радиусом {polygon.GetInradius():F2}";
+		}
+		private void PolygonCircumscribed()
+		{
+			var selectedPolygons = _selectionService.GetSelectedShapesOfType<Polygon>().ToList();
+			foreach (var polygon in selectedPolygons)
+				ssInfo.Text = $"Описанный круг с радиусом {polygon.GetCircumradius():F2}";
 		}
 		#endregion
 
@@ -410,14 +443,32 @@ namespace ShapesEditor2D
 					e.Graphics.DrawRectangle(pen, _selectionRectangle);
 				}
 
-				_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics));
-				_selectionService.SelectedVertices.ForEach(vertex => vertex.Draw(e.Graphics));
-
-				if (_modee == Mode.LineLength || _modee == Mode.PolylineLength)
+				if (_modee == Mode.LineLength || _modee == Mode.PolylineLength || _modee == Mode.PolygonArea)
+				{
 					_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics, true));
+					return;
+				}
 
 				if (_modee == Mode.LineIntersection || _modee == Mode.PolylineIntersection)
+				{
 					_selectionService.SelectedVertices.ForEach(vertex => vertex.Draw(e.Graphics, true));
+					return;
+				}
+
+				if (_modee == Mode.PolygonInscribed)
+				{
+					_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics, false, true));
+					return;
+				}
+
+				if (_modee == Mode.PolygonCircumscribed)
+				{
+					_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics, false, false, true));
+					return;
+				}
+
+				_selectionService.SelectedShapes.ForEach(shape => shape.Draw(e.Graphics));
+				_selectionService.SelectedVertices.ForEach(vertex => vertex.Draw(e.Graphics));
 			}
 		}
 		private void MainForm_KeyDown(object sender, KeyEventArgs e)
@@ -526,6 +577,12 @@ namespace ShapesEditor2D
 		private void rtsPolylineTranslate_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineTranslate, "Режим перемещения полилинии");
 		private void rtsPolylineCreatePlane_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineCreatePlane, "Режим создания плоскости полилинии");
 		private void rtsPolylineDirection_Click(object sender, EventArgs e) => ToggleMode(Mode.PolylineDirection, "Режим направления полилинии");
+		#endregion
+
+		#region RightToolStrip_Polygon
+		private void rtsPolygonArea_Click(object sender, EventArgs e) => ToggleMode(Mode.PolygonArea, "Режим расчёта площади");
+		private void rtsPolygonInscribed_Click(object sender, EventArgs e) => ToggleMode(Mode.PolygonInscribed, "Режим вписанной окружности");
+		private void rtsPolygonCircumscribed_Click(object sender, EventArgs e) => ToggleMode(Mode.PolygonCircumscribed, "Режим описанной окружности");
 		#endregion
 	}
 }

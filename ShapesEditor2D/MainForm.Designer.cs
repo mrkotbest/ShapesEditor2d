@@ -60,6 +60,10 @@
 			rtsPolylineTranslate = new ToolStripMenuItem();
 			rtsPolylineCreatePlane = new ToolStripMenuItem();
 			rtsPolylineDirection = new ToolStripMenuItem();
+			rtsPolygon = new ToolStripDropDownButton();
+			rtsPolygonArea = new ToolStripMenuItem();
+			rtsPolygonInscribed = new ToolStripMenuItem();
+			rtsPolygonCircumscribed = new ToolStripMenuItem();
 			ts.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)drawingBox).BeginInit();
 			ss.SuspendLayout();
@@ -141,7 +145,7 @@
 			// 
 			ssInfo.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 204);
 			ssInfo.Name = "ssInfo";
-			ssInfo.Size = new Size(1151, 21);
+			ssInfo.Size = new Size(1182, 21);
 			ssInfo.Spring = true;
 			ssInfo.Text = "NaN";
 			// 
@@ -156,10 +160,10 @@
 			// 
 			rts.Dock = DockStyle.Right;
 			rts.GripStyle = ToolStripGripStyle.Hidden;
-			rts.Items.AddRange(new ToolStripItem[] { rtsPoint, rtsLine, rtsPolyline });
-			rts.Location = new Point(1220, 27);
+			rts.Items.AddRange(new ToolStripItem[] { rtsPoint, rtsLine, rtsPolyline, rtsPolygon });
+			rts.Location = new Point(1219, 27);
 			rts.Name = "rts";
-			rts.Size = new Size(64, 658);
+			rts.Size = new Size(65, 658);
 			rts.TabIndex = 4;
 			rts.Text = "toolStrip1";
 			// 
@@ -171,7 +175,7 @@
 			rtsPoint.Image = (Image)resources.GetObject("rtsPoint.Image");
 			rtsPoint.ImageTransparentColor = Color.Magenta;
 			rtsPoint.Name = "rtsPoint";
-			rtsPoint.Size = new Size(61, 19);
+			rtsPoint.Size = new Size(62, 19);
 			rtsPoint.Text = "Point";
 			// 
 			// rtsPointClosestPoint
@@ -217,41 +221,41 @@
 			rtsLine.Image = (Image)resources.GetObject("rtsLine.Image");
 			rtsLine.ImageTransparentColor = Color.Magenta;
 			rtsLine.Name = "rtsLine";
-			rtsLine.Size = new Size(61, 19);
+			rtsLine.Size = new Size(62, 19);
 			rtsLine.Text = "Line";
 			// 
 			// rtsLineIntersection
 			// 
 			rtsLineIntersection.Name = "rtsLineIntersection";
-			rtsLineIntersection.Size = new Size(174, 22);
+			rtsLineIntersection.Size = new Size(180, 22);
 			rtsLineIntersection.Text = "Intersection Point";
 			rtsLineIntersection.Click += rtsLineIntersection_Click;
 			// 
 			// rtsLineLength
 			// 
 			rtsLineLength.Name = "rtsLineLength";
-			rtsLineLength.Size = new Size(174, 22);
+			rtsLineLength.Size = new Size(180, 22);
 			rtsLineLength.Text = "Length";
 			rtsLineLength.Click += rtsLineLength_Click;
 			// 
 			// rtsLineExtend
 			// 
 			rtsLineExtend.Name = "rtsLineExtend";
-			rtsLineExtend.Size = new Size(174, 22);
+			rtsLineExtend.Size = new Size(180, 22);
 			rtsLineExtend.Text = "Extend";
 			rtsLineExtend.Click += rtsLineExtend_Click;
 			// 
 			// rtsLineRotate
 			// 
 			rtsLineRotate.Name = "rtsLineRotate";
-			rtsLineRotate.Size = new Size(174, 22);
+			rtsLineRotate.Size = new Size(180, 22);
 			rtsLineRotate.Text = "Rotate";
 			rtsLineRotate.Click += rtsLineRotate_Click;
 			// 
 			// rtsLineTransform
 			// 
 			rtsLineTransform.Name = "rtsLineTransform";
-			rtsLineTransform.Size = new Size(174, 22);
+			rtsLineTransform.Size = new Size(180, 22);
 			rtsLineTransform.Text = "Transform";
 			rtsLineTransform.Click += rtsLineTransform_Click;
 			// 
@@ -263,64 +267,96 @@
 			rtsPolyline.Image = (Image)resources.GetObject("rtsPolyline.Image");
 			rtsPolyline.ImageTransparentColor = Color.Magenta;
 			rtsPolyline.Name = "rtsPolyline";
-			rtsPolyline.Size = new Size(61, 19);
+			rtsPolyline.Size = new Size(62, 19);
 			rtsPolyline.Text = "Polyline";
 			// 
 			// rtsPolylineIntersection
 			// 
 			rtsPolylineIntersection.Name = "rtsPolylineIntersection";
-			rtsPolylineIntersection.Size = new Size(144, 22);
+			rtsPolylineIntersection.Size = new Size(180, 22);
 			rtsPolylineIntersection.Text = "Intersection";
 			rtsPolylineIntersection.Click += rtsPolylineIntersection_Click;
 			// 
 			// rtsPolylineLength
 			// 
 			rtsPolylineLength.Name = "rtsPolylineLength";
-			rtsPolylineLength.Size = new Size(144, 22);
+			rtsPolylineLength.Size = new Size(180, 22);
 			rtsPolylineLength.Text = "Length";
 			rtsPolylineLength.Click += rtsPolylineLength_Click;
 			// 
 			// rtsPolylineSmooth
 			// 
 			rtsPolylineSmooth.Name = "rtsPolylineSmooth";
-			rtsPolylineSmooth.Size = new Size(144, 22);
+			rtsPolylineSmooth.Size = new Size(180, 22);
 			rtsPolylineSmooth.Text = "Smooth";
 			rtsPolylineSmooth.Click += rtsPolylineSmooth_Click;
 			// 
 			// rtsPolylineAngle
 			// 
 			rtsPolylineAngle.Name = "rtsPolylineAngle";
-			rtsPolylineAngle.Size = new Size(144, 22);
+			rtsPolylineAngle.Size = new Size(180, 22);
 			rtsPolylineAngle.Text = "Angle";
 			rtsPolylineAngle.Click += rtsPolylineAngle_Click;
 			// 
 			// rtsPolylineRotate
 			// 
 			rtsPolylineRotate.Name = "rtsPolylineRotate";
-			rtsPolylineRotate.Size = new Size(144, 22);
+			rtsPolylineRotate.Size = new Size(180, 22);
 			rtsPolylineRotate.Text = "Rotate";
 			rtsPolylineRotate.Click += rtsPolylineRotate_Click;
 			// 
 			// rtsPolylineTranslate
 			// 
 			rtsPolylineTranslate.Name = "rtsPolylineTranslate";
-			rtsPolylineTranslate.Size = new Size(144, 22);
+			rtsPolylineTranslate.Size = new Size(180, 22);
 			rtsPolylineTranslate.Text = "Translate";
 			rtsPolylineTranslate.Click += rtsPolylineTranslate_Click;
 			// 
 			// rtsPolylineCreatePlane
 			// 
 			rtsPolylineCreatePlane.Name = "rtsPolylineCreatePlane";
-			rtsPolylineCreatePlane.Size = new Size(144, 22);
+			rtsPolylineCreatePlane.Size = new Size(180, 22);
 			rtsPolylineCreatePlane.Text = "Create Plane";
 			rtsPolylineCreatePlane.Click += rtsPolylineCreatePlane_Click;
 			// 
 			// rtsPolylineDirection
 			// 
 			rtsPolylineDirection.Name = "rtsPolylineDirection";
-			rtsPolylineDirection.Size = new Size(144, 22);
+			rtsPolylineDirection.Size = new Size(180, 22);
 			rtsPolylineDirection.Text = "Direction";
 			rtsPolylineDirection.Click += rtsPolylineDirection_Click;
+			// 
+			// rtsPolygon
+			// 
+			rtsPolygon.DisplayStyle = ToolStripItemDisplayStyle.Text;
+			rtsPolygon.DropDownItems.AddRange(new ToolStripItem[] { rtsPolygonArea, rtsPolygonInscribed, rtsPolygonCircumscribed });
+			rtsPolygon.Font = new Font("Candara", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 204);
+			rtsPolygon.Image = (Image)resources.GetObject("rtsPolygon.Image");
+			rtsPolygon.ImageTransparentColor = Color.Magenta;
+			rtsPolygon.Name = "rtsPolygon";
+			rtsPolygon.Size = new Size(62, 19);
+			rtsPolygon.Text = "Polygon";
+			// 
+			// rtsPolygonArea
+			// 
+			rtsPolygonArea.Name = "rtsPolygonArea";
+			rtsPolygonArea.Size = new Size(187, 22);
+			rtsPolygonArea.Text = "Area";
+			rtsPolygonArea.Click += rtsPolygonArea_Click;
+			// 
+			// rtsPolygonInscribed
+			// 
+			rtsPolygonInscribed.Name = "rtsPolygonInscribed";
+			rtsPolygonInscribed.Size = new Size(187, 22);
+			rtsPolygonInscribed.Text = "Inscribed Circle";
+			rtsPolygonInscribed.Click += rtsPolygonInscribed_Click;
+			// 
+			// rtsPolygonCircumscribed
+			// 
+			rtsPolygonCircumscribed.Name = "rtsPolygonCircumscribed";
+			rtsPolygonCircumscribed.Size = new Size(187, 22);
+			rtsPolygonCircumscribed.Text = "Circumscribed Circle";
+			rtsPolygonCircumscribed.Click += rtsPolygonCircumscribed_Click;
 			// 
 			// MainForm
 			// 
@@ -380,5 +416,9 @@
 		private ToolStripMenuItem rtsPolylineTranslate;
 		private ToolStripMenuItem rtsPolylineCreatePlane;
 		private ToolStripMenuItem rtsPolylineDirection;
+		private ToolStripDropDownButton rtsPolygon;
+		private ToolStripMenuItem rtsPolygonArea;
+		private ToolStripMenuItem rtsPolygonInscribed;
+		private ToolStripMenuItem rtsPolygonCircumscribed;
 	}
 }

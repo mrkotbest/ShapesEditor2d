@@ -2,7 +2,7 @@
 
 namespace ShapesEditor2D.Models
 {
-    public class Polyline : Shape, ICompositeShape
+	public class Polyline : Shape, ICompositeShape
 	{
 		public List<Vertex> Vertices { get; private set; } = new List<Vertex>();
 
@@ -23,24 +23,25 @@ namespace ShapesEditor2D.Models
 
 		public override IEnumerable<Vertex> GetVertices() => Vertices;
 
-		public override void Draw(Graphics g, bool length = false)
+		public override void Draw(Graphics g, params bool[] parameters)
 		{
-			Pen pen = IsSelected ? new Pen(Color.CadetBlue, 2) : Pens.Black;
-
-			for (int i = 0; i < Vertices.Count - 1; i++)
+			if (parameters.Length > 0 && parameters[0])
 			{
-				g.DrawLine(pen, Vertices[i].X, Vertices[i].Y, Vertices[i + 1].X, Vertices[i + 1].Y);
-				Vertices[i].Draw(g);
-			}
-			Vertices[^1].Draw(g);
-
-			if (length)
-			{
-				var startPoint = Vertices.First();
 				using Font font = new("Arial", 10, FontStyle.Bold);
 				{
-					g.DrawString(GetLength().ToString("F2"), font, Brushes.Red, startPoint.X, startPoint.Y);
+					g.DrawString(GetLength().ToString("F2"), font, Brushes.Red, Vertices.First().X, Vertices.First().Y);
 				}
+				return;
+			}
+
+			using (Pen pen = new(IsSelected ? Color.CadetBlue : Color.Black, IsSelected ? 2 : 1))
+			{
+				for (int i = 0; i < Vertices.Count - 1; i++)
+				{
+					g.DrawLine(pen, Vertices[i].X, Vertices[i].Y, Vertices[i + 1].X, Vertices[i + 1].Y);
+					Vertices[i].Draw(g);
+				}
+				Vertices[^1].Draw(g);
 			}
 		}
 
@@ -63,11 +64,7 @@ namespace ShapesEditor2D.Models
 		}
 
 		public double GetLength()
-		{
-			return Vertices
-				.Zip(Vertices.Skip(1), (start, end) => new Line(start, end).GetLength())
-				.Sum();
-		}
+			=> Vertices.Zip(Vertices.Skip(1), (start, end) => new Line(start, end).GetLength()).Sum();
 
 		public void Smooth()
 		{
@@ -78,7 +75,7 @@ namespace ShapesEditor2D.Models
 			)).ToList();
 		}
 
-		public double GetAngleBetweenThreePoints(int i)
+		public double AngleBetweenThreePoints(int i)
 		{
 			if (i <= 0 || i >= Vertices.Count - 1)
 			{
@@ -100,16 +97,24 @@ namespace ShapesEditor2D.Models
 			return Math.Acos(dotProduct / (abLength * bcLength));
 		}
 
-		public void RotateAroundPoint(Vertex point, double angleInRadians)
+		public void Rotate(int mouseX, int mouseY)
 		{
-			double cos = Math.Cos(angleInRadians);
-			double sin = Math.Sin(angleInRadians);
+			if (Vertices.Count == 0) return;
+
+			var startX = Vertices.First().X;
+			var startY = Vertices.First().Y;
+
+			var dx = mouseX - startX;
+			var dy = mouseY - startY;
+			var rotangle = Math.Atan2(dy, dx);
 
 			Vertices = Vertices.Select(v =>
 			{
-				int newX = (int)(cos * (v.X - point.X) - sin * (v.Y - point.Y) + point.X);
-				int newY = (int)(sin * (v.X - point.X) + cos * (v.Y - point.Y) + point.Y);
-				return new Vertex(newX, newY);
+				var translatedX = v.X - startX;
+				var translatedY = v.Y - startY;
+				var rotatedX = (translatedX * Math.Cos(rotangle)) - (translatedY * Math.Sin(rotangle));
+				var rotatedY = (translatedX * Math.Sin(rotangle)) + (translatedY * Math.Cos(rotangle));
+				return new Vertex((int)(rotatedX + startX), (int)(rotatedY + startY));
 			}).ToList();
 		}
 

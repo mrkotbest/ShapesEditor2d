@@ -20,6 +20,9 @@
         PolylineRotate,
         PolylineTranslate,
         PolylineCreatePlane,
-        PolylineDirection
+        PolylineDirection,
+        PolygonArea,
+        PolygonInscribed,
+        PolygonCircumscribed
     }
 }

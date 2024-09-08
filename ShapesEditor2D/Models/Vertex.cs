@@ -18,14 +18,14 @@ namespace ShapesEditor2D.Models
 
 		public override IEnumerable<Vertex> GetVertices() { yield return this; }
 
-		public override void Draw(Graphics g, bool length = false)
+		public override void Draw(Graphics g, params bool[] parameters)
 		{
 			if (IsSelected)
 				g.FillRectangle(Brushes.Aqua, X - 5, Y - 5, 10, 10);
 			else
 				g.FillEllipse(Brushes.Black, X - 3, Y - 3, 6, 6);
 
-			if (length)
+			if (parameters.Length > 0 && parameters[0])
 			{
 				g.FillEllipse(Brushes.Red, X - 5, Y - 5, 10, 10);
 				using (Font font = new Font("Arial", 10, FontStyle.Bold))

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.VisualBasic.Devices;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace ShapesEditor2D.Models
 {
@@ -28,14 +30,14 @@ namespace ShapesEditor2D.Models
 			yield return End;
 		}
 
-		public override void Draw(Graphics g, bool length = false)
+		public override void Draw(Graphics g, params bool[] parameters)
 		{
 			using (Pen pen = new(IsSelected ? Color.CadetBlue : Color.Black, IsSelected ? 2 : 1))
 			{
 				g.DrawLine(pen, Start.X, Start.Y, End.X, End.Y);
 			}
 
-			if (length)
+			if (parameters.Length > 0 && parameters[0])
 			{
 				using (Pen pen = new(IsSelected ? Color.RosyBrown : Color.Black, IsSelected ? 2 : 1))
 				{
@@ -43,7 +45,8 @@ namespace ShapesEditor2D.Models
 				}
 				using (Font font = new("Arial", 10, FontStyle.Bold))
 				{
-					g.DrawString(GetLength().ToString("F2"), font, Brushes.Red, GetMidPoint());
+					var mid = GetMidPoint();
+					g.DrawString(GetLength().ToString("F2"), font, Brushes.Red, mid.X, mid.Y);
 				}
 			}
 			Start.Draw(g);
@@ -52,15 +55,31 @@ namespace ShapesEditor2D.Models
 
 		public override void Translate(int x, int y)
 		{
-			var translationMatrix = Matrix.CreateTranslationMatrix(x, y);
-			Start = translationMatrix.Apply(Start);
-			End = translationMatrix.Apply(End);
+			Matrix translationMatrix = new Matrix();
+			translationMatrix.Translate(x, y);
+			Point[] points = { new(Start.X, Start.Y), new(End.X, End.Y) };
+			translationMatrix.TransformPoints(points);
+			Start = new Vertex(points[0].X, points[0].Y);
+			End = new Vertex(points[1].X, points[1].Y);
 		}
 
-		public void Rotate(double angle)
+		private Vertex _initialEnd;
+		public void Rotate(int mouseX, int mouseY)
 		{
-			var rotationMatrix = Matrix.CreateRotationMatrix(angle);
-			End = rotationMatrix.Apply(End);
+			_initialEnd ??= new Vertex(End.X, End.Y);
+
+			var curr_dx = _initialEnd.X - Start.X;
+			var curr_dy = _initialEnd.Y - Start.Y;
+
+			var dx = mouseX - Start.X;
+			var dy = mouseY - Start.Y;
+
+			var rotangle = Math.Atan2((dy * curr_dx) - (dx * curr_dy), (dx * curr_dx) + (dy * curr_dy));
+
+			var new_x = (int)(Start.X + (curr_dx * Math.Cos(rotangle)) - (curr_dy * Math.Sin(rotangle)));
+			var new_y = (int)(Start.Y + (curr_dx * Math.Sin(rotangle)) + (curr_dy * Math.Cos(rotangle)));
+
+			End = new Vertex(new_x, new_y);
 		}
 
 		public override bool ContainsPoint(Vertex v)
@@ -77,8 +96,8 @@ namespace ShapesEditor2D.Models
 		public double GetLength()
 			=> Start.DistanceTo(End);
 
-		public PointF GetMidPoint()
-			=> new PointF((Start.X + End.X) / 2, (Start.Y + End.Y) / 2);
+		public Vertex GetMidPoint()
+			=> new((Start.X + End.X) / 2, (Start.Y + End.Y) / 2);
 
 		public List<Vertex> Intersect(Shape someShape)
 		{
